@@ -34,6 +34,7 @@ typedef enum {
     PREC_ADSUB,
     PREC_MULDIV,
     PREC_POW,
+    PREC_UNARY,
 } precedence;
 
 typedef struct {
@@ -286,8 +287,9 @@ double grouping(Parser *parser)
 
 double unary(Parser *parser)
 {
-    parser_consume(parser);
-    return number(parser) * -1;
+    double result = expression(parser, PREC_UNARY);
+
+    return -result;
 }
 
 double binary(Parser *parser)
