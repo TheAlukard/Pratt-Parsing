@@ -1,2 +1,4 @@
-PrattParsing.exe: main.c
-	gcc -o PrattParsing.exe main.c
+SRC=$(shell ls ./src/*.c)
+
+PrattParsing.exe: $(SRC) 
+	gcc -O3 -o PrattParsing.exe $(SRC)
