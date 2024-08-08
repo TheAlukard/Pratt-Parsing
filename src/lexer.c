@@ -1,6 +1,8 @@
 #include "lexer.h"
 #include "string.h"
 #include <ctype.h>
+#include <stdbool.h>
+#include <string.h>
 
 Lexer lexer_new(const char *text)
 {
@@ -27,6 +29,31 @@ void trim_left(Lexer *lexer)
     while (isspace(lexer_peek(lexer))) {
         lexer_consume(lexer);
     }
+}
+
+Token expected(Lexer *lexer, const char *text, int len, TokenType type)
+{
+    int start = lexer->current;
+
+    Token token;
+
+    while (isalnum(lexer_peek(lexer))) {
+        lexer_consume(lexer);
+    }
+
+    if (lexer->current - start == len) {
+        if (memcmp(&lexer->text[start], text, len) == 0) {
+            token.type = type;
+        }
+    }
+    else {
+        token.type = TOKEN_IDENTIFIER;
+    }
+
+    token.start = &lexer->text[start];
+    token.len = lexer->current - start;
+
+    return token;
 }
 
 Token scan_token(Lexer *lexer)
@@ -99,6 +126,9 @@ Token scan_token(Lexer *lexer)
                 token.len = 1;
                 lexer_consume(lexer);
                 break;
+            case 'a':
+                token = expected(lexer, "ans", 3, TOKEN_ANS);
+                break;
             default:
                 token.type = TOKEN_ERROR;
                 token.start = &lexer->text[lexer->current];
@@ -138,6 +168,8 @@ void print_tokenlist(TokenList *list)
         "CARET", 
         "LEFT_PAREN",
         "RIGHT_PAREN",
+        "ANS",
+        "IDENTIFIER",
         "END",
         "ERROR",
     };

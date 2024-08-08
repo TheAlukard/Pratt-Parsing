@@ -11,6 +11,8 @@ typedef enum {
     TOKEN_CARET,
     TOKEN_LEFT_PAREN,
     TOKEN_RIGHT_PAREN,
+    TOKEN_ANS,
+    TOKEN_IDENTIFIER,
     TOKEN_END,
     TOKEN_ERROR,
 } TokenType;

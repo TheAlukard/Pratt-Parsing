@@ -6,6 +6,7 @@ double unary(Parser *parser);
 double binary(Parser *parser);
 double number(Parser *parser);
 double grouping(Parser *parser);
+double ans(Parser *parser);
 
 ParseRule rules[] = {
     {number, NULL, PREC_NONE},
@@ -16,6 +17,8 @@ ParseRule rules[] = {
     {NULL, binary, PREC_POW},
     {grouping, NULL, PREC_NONE},
     {NULL, NULL, PREC_NONE},
+    {ans, NULL, PREC_NONE},
+    {NULL, NULL, PREC_NONE},
     {NULL, NULL, PREC_NONE},
     {NULL, NULL, PREC_NONE},
 };
@@ -25,14 +28,10 @@ ParseRule* get_rule(Token token)
     return &rules[token.type];
 }
 
-Parser parser_new(TokenList *list)
+void parser_new(Parser *parser, TokenList *list)
 {
-    Parser parser = {
-        .tokens = list,
-        .current = 0,
-    };
-
-    return parser;
+    parser->current = 0;
+    parser->tokens = list;
 }
 
 Token parser_peek(Parser *parser)
@@ -44,7 +43,6 @@ Token parser_consume(Parser *parser)
 {
     return parser->tokens->items[parser->current++];
 }
-
 
 double expression(Parser *parser, precedence rbp)
 {
@@ -65,6 +63,19 @@ double expression(Parser *parser, precedence rbp)
     }
 
     return result;
+}
+
+double parse_expr(Parser *parser)
+{
+    double result = expression(parser, PREC_NONE);
+    parser->ans = result;
+
+    return result;
+}
+
+double ans(Parser *parser)
+{
+    return parser->ans;
 }
 
 double grouping(Parser *parser)

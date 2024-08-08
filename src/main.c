@@ -12,13 +12,14 @@ int main(void)
 {
     const size_t buffer_len = 1000;
     char buffer[buffer_len]; 
-
+    Parser parser = {0};
+    
     while (true) {
         printf("> ");
         fgets(buffer, sizeof(char) * buffer_len, stdin);
         TokenList list = tokenize(buffer);
-        Parser parser = parser_new(&list);
-        printf("> %0.15lf\n", expression(&parser, PREC_NONE));
+        parser_new(&parser, &list);
+        printf("> %0.15lf\n", parse_expr(&parser));
         list_free(&list);
     }
 }
