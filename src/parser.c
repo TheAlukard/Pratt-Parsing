@@ -1,12 +1,14 @@
 #include "parser.h"
 #include <math.h> 
 #include <string.h>
+#include <stdbool.h>
 
 double unary(Parser *parser);
 double binary(Parser *parser);
 double number(Parser *parser);
 double grouping(Parser *parser);
 double ans(Parser *parser);
+double identifier(Parser *parser);
 
 ParseRule rules[] = {
     {number, NULL, PREC_NONE},
@@ -17,8 +19,9 @@ ParseRule rules[] = {
     {NULL, binary, PREC_POW},
     {grouping, NULL, PREC_NONE},
     {NULL, NULL, PREC_NONE},
-    {ans, NULL, PREC_NONE},
     {NULL, NULL, PREC_NONE},
+    {ans, NULL, PREC_NONE},
+    {identifier, NULL, PREC_NONE},
     {NULL, NULL, PREC_NONE},
     {NULL, NULL, PREC_NONE},
 };
@@ -32,6 +35,11 @@ void parser_new(Parser *parser, TokenList *list)
 {
     parser->current = 0;
     parser->tokens = list;
+}
+
+Token parser_prev(Parser *parser)
+{
+    return parser->tokens->items[parser->current - 1];
 }
 
 Token parser_peek(Parser *parser)
@@ -95,14 +103,68 @@ double unary(Parser *parser)
 
 double binary(Parser *parser)
 {
-    double result = expression(parser, get_rule(parser->tokens->items[parser->current - 1])->lbp);
+    double result = expression(parser, get_rule(parser_prev(parser))->lbp);
+
+    return result;
+}
+
+bool expected_str(const char *str, const char *expected, int len)
+{
+    return memcmp(str, expected, sizeof(char) * len) == 0;
+}
+
+double identifier(Parser *parser)
+{
+    // math funcs 
+    // sin
+    // cos
+    // tan
+
+    Token ident = parser_prev(parser);
+    double result = 0;
+
+    switch (*ident.start) {
+        case 's':
+            if (expected_str(ident.start, "sin", ident.len)) {
+                parser_consume(parser);
+                result = sin(grouping(parser));
+            }
+            else {
+                fprintf(stderr, "Error: Unknown identifier '%.*s'\n", ident.len, ident.start);
+                exit(1);
+            }
+            break;
+        case 'c':
+            if (expected_str(ident.start, "cos", ident.len)) {
+                parser_consume(parser);
+                result = cos(grouping(parser));
+            }
+            else {
+                fprintf(stderr, "Error: Unknown identifier '%.*s'\n", ident.len, ident.start);
+                exit(1);
+            }
+            break;
+        case 't':
+            if (expected_str(ident.start, "tan", ident.len)) {
+                parser_consume(parser);
+                result = tan(grouping(parser));
+            }
+            else {
+                fprintf(stderr, "Error: Unknown identifier '%.*s'\n", ident.len, ident.start);
+                exit(1);
+            }
+            break;
+        default:
+            fprintf(stderr, "Error: Unknown identifier '%.*s'\n", ident.len, ident.start);
+            exit(1);
+    }
 
     return result;
 }
 
 double number(Parser *parser)
 {
-    Token num = parser->tokens->items[parser->current - 1];
+    Token num = parser_prev(parser);
     char temp[num.len + 1];
     memcpy(temp, num.start, num.len * sizeof(char));
     temp[num.len] = '\0';

@@ -126,13 +126,24 @@ Token scan_token(Lexer *lexer)
                 token.len = 1;
                 lexer_consume(lexer);
                 break;
+            case ',':
+                token.type = TOKEN_COMMA;
+                token.start = &lexer->text[lexer->current];
+                token.len = 1;
+                lexer_consume(lexer);
+                break;
             case 'a':
                 token = expected(lexer, "ans", 3, TOKEN_ANS);
                 break;
             default:
-                token.type = TOKEN_ERROR;
-                token.start = &lexer->text[lexer->current];
-                token.len = strlen(token.start);
+                if (isalpha(c)) {
+                    token = expected(lexer, "", 0, TOKEN_IDENTIFIER);
+                }
+                else {
+                    token.type = TOKEN_ERROR;
+                    token.start = &lexer->text[lexer->current];
+                    token.len = strlen(token.start);
+                }
                 break;
         }
     }
@@ -168,6 +179,7 @@ void print_tokenlist(TokenList *list)
         "CARET", 
         "LEFT_PAREN",
         "RIGHT_PAREN",
+        "COMMA",
         "ANS",
         "IDENTIFIER",
         "END",
