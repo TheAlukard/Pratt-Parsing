@@ -9,6 +9,7 @@ double number(Parser *parser);
 double grouping(Parser *parser);
 double ans(Parser *parser);
 double identifier(Parser *parser);
+double exit_prog(Parser *parser);
 
 ParseRule rules[] = {
     {number, NULL, PREC_NONE},
@@ -22,9 +23,15 @@ ParseRule rules[] = {
     {NULL, NULL, PREC_NONE},
     {ans, NULL, PREC_NONE},
     {identifier, NULL, PREC_NONE},
+    {exit_prog, NULL, PREC_NONE},
     {NULL, NULL, PREC_NONE},
     {NULL, NULL, PREC_NONE},
 };
+
+double exit_prog(Parser *parser)
+{
+    exit(0);
+}
 
 ParseRule* get_rule(Token token)
 {

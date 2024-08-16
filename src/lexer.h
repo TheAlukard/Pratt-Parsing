@@ -14,6 +14,7 @@ typedef enum {
     TOKEN_COMMA,
     TOKEN_ANS,
     TOKEN_IDENTIFIER,
+    TOKEN_EXIT,
     TOKEN_END,
     TOKEN_ERROR,
 } TokenType;

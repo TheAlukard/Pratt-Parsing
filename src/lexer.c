@@ -135,6 +135,9 @@ Token scan_token(Lexer *lexer)
             case 'a':
                 token = expected(lexer, "ans", 3, TOKEN_ANS);
                 break;
+            case 'e':
+                token = expected(lexer, "exit", 4, TOKEN_EXIT);
+                break;
             default:
                 if (isalpha(c)) {
                     token = expected(lexer, "", 0, TOKEN_IDENTIFIER);
@@ -182,6 +185,7 @@ void print_tokenlist(TokenList *list)
         "COMMA",
         "ANS",
         "IDENTIFIER",
+        "EXIT",
         "END",
         "ERROR",
     };
