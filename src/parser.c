@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "lexer.h"
 #include <math.h> 
 #include <string.h>
 #include <stdbool.h>
@@ -44,28 +45,41 @@ void parser_new(Parser *parser, TokenList *list)
     parser->tokens = list;
 }
 
-Token parser_prev(Parser *parser)
+Token prev(Parser *parser)
 {
     return parser->tokens->items[parser->current - 1];
 }
 
-Token parser_peek(Parser *parser)
+Token peek(Parser *parser)
 {
     return parser->tokens->items[parser->current];
 }
 
-Token parser_consume(Parser *parser)
+Token consume(Parser *parser)
 {
     return parser->tokens->items[parser->current++];
 }
 
+Token expect(Parser *parser, TokenType expected)
+{
+    Token token = peek(parser);
+
+    if (token.type == expected) {
+        return consume(parser);
+    }
+    else {
+        fprintf(stderr, "Error: Invalid Token '%.*s'", token.len, token.start);
+        exit(1);
+    }
+}
+
 double expression(Parser *parser, precedence rbp)
 {
-    Token token = parser_consume(parser);
+    Token token = consume(parser);
     double result = get_rule(token)->prefix(parser);
 
-    while (rbp < get_rule(parser_peek(parser))->lbp) {
-        token = parser_consume(parser);
+    while (rbp < get_rule(peek(parser))->lbp) {
+        token = consume(parser);
         double right = get_rule(token)->infix(parser); 
         switch (token.type) {
             case TOKEN_PLUS: result = result + right; break;
@@ -96,7 +110,7 @@ double ans(Parser *parser)
 double grouping(Parser *parser)
 {
     double result = expression(parser, PREC_NONE);
-    parser_consume(parser);
+    expect(parser, TOKEN_RIGHT_PAREN);
 
     return result;
 }
@@ -110,7 +124,7 @@ double unary(Parser *parser)
 
 double binary(Parser *parser)
 {
-    double result = expression(parser, get_rule(parser_prev(parser))->lbp);
+    double result = expression(parser, get_rule(prev(parser))->lbp);
 
     return result;
 }
@@ -120,58 +134,155 @@ bool expected_str(const char *str, const char *expected, int len)
     return memcmp(str, expected, sizeof(char) * len) == 0;
 }
 
+typedef enum {
+    SIN,
+    COS,
+    TAN,
+    ASIN,
+    ACOS,
+    ATAN,
+    ATAN2,
+    SINH,
+    COSH,
+    TANH,
+    ASINH,
+    ACOSH,
+    ATANH,
+    EXP,
+    LOG,
+    LOG10,
+    LOG2,
+    CEIL,
+    FLOOR,
+    ROUND,
+    SQRT,
+    PI,
+} MathFunc;
+
+double math_func(Parser *parser, MathFunc func)
+{
+    double r1, r2;
+
+    switch (func) {
+        case SIN:
+            expect(parser, TOKEN_LEFT_PAREN);
+            return sin(grouping(parser)); 
+        case COS:
+            expect(parser, TOKEN_LEFT_PAREN);
+            return cos(grouping(parser));
+        case TAN:
+            expect(parser, TOKEN_LEFT_PAREN);
+            return tan(grouping(parser));
+        case ASIN:
+            expect(parser, TOKEN_LEFT_PAREN);
+            return asin(grouping(parser));
+        case ACOS:
+            expect(parser, TOKEN_LEFT_PAREN);
+            return acos(grouping(parser));
+        case ATAN:
+            expect(parser, TOKEN_LEFT_PAREN);
+            return atan(grouping(parser));
+        case ATAN2:
+            expect(parser, TOKEN_LEFT_PAREN);
+            r1 = expression(parser, PREC_NONE);
+            expect(parser, TOKEN_COMMA);
+            r2 = grouping(parser);
+            return atan2(r1, r2);
+        case SINH:
+            expect(parser, TOKEN_LEFT_PAREN);
+            return sinh(grouping(parser));
+        case COSH:
+            expect(parser, TOKEN_LEFT_PAREN);
+            return cosh(grouping(parser));
+        case TANH:
+            expect(parser, TOKEN_LEFT_PAREN);
+            return tanh(grouping(parser));
+        case ASINH:
+            expect(parser, TOKEN_LEFT_PAREN);
+            return asinh(grouping(parser));
+        case ACOSH:
+            expect(parser, TOKEN_LEFT_PAREN);
+            return acosh(grouping(parser));
+        case ATANH:
+            expect(parser, TOKEN_LEFT_PAREN);
+            return atanh(grouping(parser));
+        case EXP:
+            expect(parser, TOKEN_LEFT_PAREN);
+            return exp(grouping(parser));
+        case LOG:
+            expect(parser, TOKEN_LEFT_PAREN);
+            return log(grouping(parser));
+        case LOG10:
+            expect(parser, TOKEN_LEFT_PAREN);
+            return log10(grouping(parser));
+        case LOG2:
+            expect(parser, TOKEN_LEFT_PAREN);
+            return log2(grouping(parser));
+        case CEIL:
+            expect(parser, TOKEN_LEFT_PAREN);
+            return ceil(grouping(parser));
+        case FLOOR:
+            expect(parser, TOKEN_LEFT_PAREN);
+            return floor(grouping(parser));
+        case ROUND:
+            expect(parser, TOKEN_LEFT_PAREN);
+            return round(grouping(parser));
+        case SQRT:
+            expect(parser, TOKEN_LEFT_PAREN);
+            return sqrt(grouping(parser));
+        case PI:
+            return 3.14159265358979323846f;
+    }
+}
+
 double identifier(Parser *parser)
 {
     // math funcs 
     // sin
     // cos
     // tan
+    //
 
-    Token ident = parser_prev(parser);
-    double result = 0;
+    const char* funcs[] = {
+        "sin",
+        "cos",
+        "tan",
+        "asin",
+        "acos",
+        "atan",
+        "atan2",
+        "sinh",
+        "cosh",
+        "tanh",
+        "asinh",
+        "acosh",
+        "atanh",
+        "exp",
+        "log",
+        "log10",
+        "log2",
+        "ceil",
+        "floor",
+        "round",
+        "sqrt",
+        "pi",
+    };
 
-    switch (*ident.start) {
-        case 's':
-            if (expected_str(ident.start, "sin", ident.len)) {
-                parser_consume(parser);
-                result = sin(grouping(parser));
-            }
-            else {
-                fprintf(stderr, "Error: Unknown identifier '%.*s'\n", ident.len, ident.start);
-                exit(1);
-            }
-            break;
-        case 'c':
-            if (expected_str(ident.start, "cos", ident.len)) {
-                parser_consume(parser);
-                result = cos(grouping(parser));
-            }
-            else {
-                fprintf(stderr, "Error: Unknown identifier '%.*s'\n", ident.len, ident.start);
-                exit(1);
-            }
-            break;
-        case 't':
-            if (expected_str(ident.start, "tan", ident.len)) {
-                parser_consume(parser);
-                result = tan(grouping(parser));
-            }
-            else {
-                fprintf(stderr, "Error: Unknown identifier '%.*s'\n", ident.len, ident.start);
-                exit(1);
-            }
-            break;
-        default:
-            fprintf(stderr, "Error: Unknown identifier '%.*s'\n", ident.len, ident.start);
-            exit(1);
+    Token ident = prev(parser);
+
+    for (int i = 0; i < array_len(funcs); i++) {
+        if (expected_str(ident.start, funcs[i], ident.len)) {
+            return math_func(parser, (MathFunc)i);
+        }
     }
 
-    return result;
+    fprintf(stderr, "Error: Unkown identifier '%.*s'", ident.len, ident.start);
+    exit(1);
 }
 
 double number(Parser *parser)
 {
-    Token num = parser_prev(parser);
+    Token num = prev(parser);
     char temp[num.len + 1];
     memcpy(temp, num.start, num.len * sizeof(char));
     temp[num.len] = '\0';
