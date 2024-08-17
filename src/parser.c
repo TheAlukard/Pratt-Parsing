@@ -301,14 +301,20 @@ double declare(Parser *parser)
     Token ident = expect(parser, TOKEN_IDENTIFIER); 
     expect(parser, TOKEN_EQUAL); 
     double result = expression(parser, PREC_NONE);
-    char *name = (char*)malloc(sizeof(char) * ident.len);
-    Token key = {
-        .start = name,
-        .len = ident.len,
-        .type = ident.type,
-    };
-    memcpy(name, ident.start, sizeof(char) * ident.len);
-    map_set(&parser->map, key, result);
+
+    if (! map_has(&parser->map, ident)) {
+        char *name = (char*)malloc(sizeof(char) * ident.len);
+        Token key = {
+            .start = name,
+            .len = ident.len,
+            .type = ident.type,
+        };
+        memcpy(name, ident.start, sizeof(char) * ident.len);
+        map_set(&parser->map, key, result);
+    }
+    else {
+        map_set(&parser->map, ident, result);
+    }
 
     return result;
 }
