@@ -3,6 +3,7 @@
 #include <math.h> 
 #include <string.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 double unary(Parser *parser);
 double binary(Parser *parser);
@@ -11,6 +12,8 @@ double grouping(Parser *parser);
 double ans(Parser *parser);
 double identifier(Parser *parser);
 double exit_prog(Parser *parser);
+double declare(Parser *parser);
+double get_var(Parser *parser);
 
 ParseRule rules[] = {
     {number, NULL, PREC_NONE},
@@ -22,8 +25,11 @@ ParseRule rules[] = {
     {grouping, NULL, PREC_NONE},
     {NULL, NULL, PREC_NONE},
     {NULL, NULL, PREC_NONE},
+    {NULL, NULL, PREC_NONE},
+    {get_var, NULL, PREC_NONE},
     {ans, NULL, PREC_NONE},
     {identifier, NULL, PREC_NONE},
+    {declare, NULL, PREC_NONE},
     {exit_prog, NULL, PREC_NONE},
     {NULL, NULL, PREC_NONE},
     {NULL, NULL, PREC_NONE},
@@ -39,7 +45,17 @@ ParseRule* get_rule(Token token)
     return &rules[token.type];
 }
 
-void parser_new(Parser *parser, TokenList *list)
+Parser parser_create()
+{
+    Parser parser;
+    parser.current = 0;
+    parser.ans = 0;
+    parser.map = map_new();
+    
+    return parser;
+}
+
+void parser_reset(Parser *parser, TokenList *list)
 {
     parser->current = 0;
     parser->tokens = list;
@@ -278,6 +294,41 @@ double identifier(Parser *parser)
 
     fprintf(stderr, "Error: Unkown identifier '%.*s'", ident.len, ident.start);
     exit(1);
+}
+
+double declare(Parser *parser)
+{
+    Token ident = expect(parser, TOKEN_IDENTIFIER); 
+    expect(parser, TOKEN_EQUAL); 
+    double result = expression(parser, PREC_NONE);
+    char *name = (char*)malloc(sizeof(char) * ident.len);
+    Token key = {
+        .start = name,
+        .len = ident.len,
+        .type = ident.type,
+    };
+    memcpy(name, ident.start, sizeof(char) * ident.len);
+    map_set(&parser->map, key, result);
+
+    return result;
+}
+
+double get_var(Parser *parser)
+{
+    Token ident = expect(parser, TOKEN_IDENTIFIER); 
+    
+    if (! map_has(&parser->map, ident)) {
+        fprintf(stderr, "Error: Variable '%.*s' doesn't exist\n", ident.len, ident.start);
+        for (int i = 0; i < parser->map.capacity; i++) {
+            if (parser->map.items[i].valid) {
+                printf("Key: %.*s, Value: %lf\n", parser->map.items[i].key.len, parser->map.items[i].key.start, parser->map.items[i].value);
+            }
+        }
+        exit(1);
+    }
+    double result = map_get(&parser->map, ident);
+
+    return result;
 }
 
 double number(Parser *parser)

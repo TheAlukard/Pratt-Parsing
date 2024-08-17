@@ -132,11 +132,26 @@ Token scan_token(Lexer *lexer)
                 token.len = 1;
                 lexer_consume(lexer);
                 break;
+            case '=':
+                token.type = TOKEN_EQUAL;
+                token.start = &lexer->text[lexer->current];
+                token.len = 1;
+                lexer_consume(lexer);
+                break;
+            case '$':
+                token.type = TOKEN_DOLLAR;
+                token.start = &lexer->text[lexer->current];
+                token.len = 1;
+                lexer_consume(lexer);
+                break;
             case 'a':
                 token = expected(lexer, "ans", 3, TOKEN_ANS);
                 break;
             case 'e':
                 token = expected(lexer, "exit", 4, TOKEN_EXIT);
+                break;
+            case 'l':
+                token = expected(lexer, "let", 3, TOKEN_LET);
                 break;
             default:
                 if (isalpha(c)) {
@@ -183,8 +198,11 @@ void print_tokenlist(TokenList *list)
         "LEFT_PAREN",
         "RIGHT_PAREN",
         "COMMA",
+        "EQUAL",
+        "DOLLAR",
         "ANS",
         "IDENTIFIER",
+        "LET",
         "EXIT",
         "END",
         "ERROR",
