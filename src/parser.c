@@ -298,7 +298,7 @@ double identifier(Parser *parser)
 
 double declare(Parser *parser)
 {
-    Token ident = expect(parser, TOKEN_IDENTIFIER); 
+    Token ident = consume(parser); 
     expect(parser, TOKEN_EQUAL); 
     double result = expression(parser, PREC_NONE);
 
