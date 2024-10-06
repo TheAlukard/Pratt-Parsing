@@ -12,7 +12,7 @@
 #define array_len(array) (sizeof(array) / sizeof((array)[0]))
 
 #ifndef DEFAULT_LIST_CAP
-  #define DEFAULT_LIST_CAP 32
+  #define DEFAULT_LIST_CAP 64
 #endif
 
 #define list_of(type) \
@@ -27,7 +27,9 @@
     type *items;\
     size_t count;\
     size_t capacity;\
-  } name;\
+  } name
+
+#define list_new(type) ((type){.items = NULL, .count = 0, .capacity = 0})
 
 #define list_alloc(list)                                                    \
   do {                                                                      \
@@ -49,7 +51,7 @@
 #define list_push(list, item)                                                            \
   do {                                                                                   \
     if ((list)->count >= (list)->capacity) {                                             \
-      (list)->capacity *= 2;                                                             \
+      (list)->capacity = (list)->capacity == 0 ? DEFAULT_LIST_CAP : (list)->capacity * 2;\
       (list)->items = realloc((list)->items, (list)->capacity * sizeof(*(list)->items)); \
     }                                                                                    \
     (list)->items[(list)->count] = item;                                                 \

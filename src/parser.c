@@ -17,6 +17,7 @@ double get_var(Parser *parser);
 
 ParseRule rules[] = {
     {number, NULL, PREC_NONE},
+    {NULL, NULL, PREC_NONE},
     {NULL, binary, PREC_ADSUB},
     {unary, binary, PREC_ADSUB},
     {NULL, binary, PREC_MULDIV},
@@ -33,10 +34,24 @@ ParseRule rules[] = {
     {exit_prog, NULL, PREC_NONE},
     {NULL, NULL, PREC_NONE},
     {NULL, NULL, PREC_NONE},
+	{NULL, NULL, PREC_NONE},
+	{NULL, NULL, PREC_NONE},
+	{NULL, NULL, PREC_NONE},
+	{NULL, NULL, PREC_NONE},
+	{NULL, NULL, PREC_NONE},
+	{NULL, NULL, PREC_NONE},
+	{NULL, NULL, PREC_NONE},
+	{NULL, NULL, PREC_NONE},
+	{NULL, NULL, PREC_NONE},
+	{NULL, NULL, PREC_NONE},
+	{NULL, NULL, PREC_NONE},
+	{NULL, NULL, PREC_NONE},
+	{NULL, NULL, PREC_NONE},
 };
 
 double exit_prog(Parser *parser)
 {
+	(void)(parser);
     exit(0);
 }
 
@@ -94,7 +109,7 @@ double expression(Parser *parser, precedence rbp)
     Token token = consume(parser);
     double result = get_rule(token)->prefix(parser);
 
-    while (rbp < get_rule(peek(parser))->lbp) {
+    while ((int)rbp < get_rule(peek(parser))->lbp) {
         token = consume(parser);
         double right = get_rule(token)->infix(parser); 
         switch (token.type) {
@@ -248,6 +263,8 @@ double math_func(Parser *parser, MathFunc func)
             return sqrt(grouping(parser));
         case PI:
             return 3.14159265358979323846f;
+		default:
+			return 0;
     }
 }
 
@@ -286,7 +303,7 @@ double identifier(Parser *parser)
 
     Token ident = prev(parser);
 
-    for (int i = 0; i < array_len(funcs); i++) {
+    for (size_t i = 0; i < array_len(funcs); i++) {
         if (expected_str(ident.start, funcs[i], ident.len)) {
             return math_func(parser, (MathFunc)i);
         }
@@ -325,7 +342,7 @@ double get_var(Parser *parser)
     
     if (! map_has(&parser->map, ident)) {
         fprintf(stderr, "Error: Variable '%.*s' doesn't exist\n", ident.len, ident.start);
-        for (int i = 0; i < parser->map.capacity; i++) {
+        for (size_t i = 0; i < parser->map.capacity; i++) {
             if (parser->map.items[i].valid) {
                 printf("Key: %.*s, Value: %lf\n", parser->map.items[i].key.len, parser->map.items[i].key.start, parser->map.items[i].value);
             }
