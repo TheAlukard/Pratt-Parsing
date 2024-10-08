@@ -32,7 +32,7 @@ static void trim_left(Lexer *lexer)
     }
 }
 
-static Token expected(Lexer *lexer, const char *text, int len, TokenType type)
+static Token match_identifier(Lexer *lexer, const char *text, int len, TokenType type)
 {
     int start = lexer->current;
 
@@ -57,13 +57,13 @@ static Token expected(Lexer *lexer, const char *text, int len, TokenType type)
     return token;
 }
 
-static Token match(Lexer *lexer, const char *text, int len, TokenType type)
+static Token match(Lexer *lexer, const char *text, int len, TokenType type, int(*cmp)(int))
 {
     int start = lexer->current;
 
     Token token;
 
-    while (!isspace(peek(lexer))) {
+    while (!cmp(peek(lexer))) {
         consume(lexer);
     }
 
@@ -83,13 +83,13 @@ static Token match(Lexer *lexer, const char *text, int len, TokenType type)
     return token;
 }
 
-static Token this_or_that(Lexer *lexer, const char *first, TokenType first_type, const char *second, TokenType second_type)
+static Token this_or_that(Lexer *lexer, const char *first, TokenType first_type, const char *second, TokenType second_type, int(*cmp)(int))
 {
 	int start = lexer->current;
 
 	Token token;
 
-	while (!isspace(peek(lexer))) {
+	while (!cmp(peek(lexer))) {
 		consume(lexer);
 	}
 
@@ -119,7 +119,7 @@ static Token this_or_that(Lexer *lexer, const char *first, TokenType first_type,
 
 static Token parse_string_literal(Lexer *lexer)
 {
-	char quote = consume(lexer);
+	const char quote = consume(lexer);
 
 	Token token;
 
@@ -223,42 +223,48 @@ static Token scan_token(Lexer *lexer)
                 token.len = 1;
                 consume(lexer);
                 break;
+			case '$':
+				token.type = TOKEN_DOLLAR;
+				token.start = &lexer->text[lexer->current];
+				token.len = 1;
+				consume(lexer);
+				break;
             case '=':
-				token = this_or_that(lexer, "=", TOKEN_EQUAL, "==", TOKEN_EQEQ);	
+				token = this_or_that(lexer, "=", TOKEN_EQUAL, "==", TOKEN_EQEQ, isspace);	
 				break;
 			case '&':
-				token = match(lexer, "&&", 2, TOKEN_AND);
+				token = match(lexer, "&&", 2, TOKEN_AND, isspace);
 				break;
 			case '|':
-				token = match(lexer, "||", 2, TOKEN_OR);
+				token = match(lexer, "||", 2, TOKEN_OR, isspace);
 				break;
 			case '!':
-				token = this_or_that(lexer, "!", TOKEN_NOT, "!=", TOKEN_NOTEQ);
+				token = this_or_that(lexer, "!", TOKEN_NOT, "!=", TOKEN_NOTEQ, isspace);
 				break;
 			case '<':
-				token = this_or_that(lexer, "<", TOKEN_LESS, "<=", TOKEN_LESSEQ);
+				token = this_or_that(lexer, "<", TOKEN_LESS, "<=", TOKEN_LESSEQ, isspace);
 				break;
 			case '>':
-				token = this_or_that(lexer, ">", TOKEN_GREATER, ">=", TOKEN_GREATEREQ);
+				token = this_or_that(lexer, ">", TOKEN_GREATER, ">=", TOKEN_GREATEREQ, isspace);
 				break;
             case 'a':
-                token = expected(lexer, "ans", 3, TOKEN_ANS);
+                token = match_identifier(lexer, "ans", 3, TOKEN_ANS);
                 break;
             case 'e':
-                token = expected(lexer, "exit", 4, TOKEN_EXIT);
+                token = match_identifier(lexer, "exit", 4, TOKEN_EXIT);
                 break;
             case 'l':
-                token = expected(lexer, "let", 3, TOKEN_LET);
+                token = match_identifier(lexer, "let", 3, TOKEN_LET);
                 break;
 			case 't':
-				token = expected(lexer, "true", 4, TOKEN_TRUE);
+				token = match_identifier(lexer, "true", 4, TOKEN_TRUE);
 				break;
 			case 'f':
-				token = expected(lexer, "false", 5, TOKEN_FALSE);
+				token = match_identifier(lexer, "false", 5, TOKEN_FALSE);
 				break;
             default:
                 if (isalpha(c)) {
-                    token = expected(lexer, "", 0, TOKEN_IDENTIFIER);
+                    token = match_identifier(lexer, "", 0, TOKEN_IDENTIFIER);
                 }
                 else {
                     token.type = TOKEN_ERROR;
@@ -272,21 +278,17 @@ static Token scan_token(Lexer *lexer)
     return token;
 }
 
-TokenList tokenize(const char *text)
+void tokenize(const char *text, TokenList *output)
 {
-    TokenList list;
-    list_alloc(&list);
     Lexer lexer = lexer_new(text); 
     Token token = scan_token(&lexer);
 
     while (token.type != TOKEN_END && token.type != TOKEN_ERROR) {
-        list_push(&list, token);
+        list_push(output, token);
         token = scan_token(&lexer);
     }
 
-    list_push(&list, token);
-
-    return list;
+    list_push(output, token);
 }
 
 void print_tokenlist(TokenList *list)

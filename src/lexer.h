@@ -48,6 +48,6 @@ typedef struct {
 LIST_DEF(TokenList, Token);
 
 Lexer lexer_new(const char *text);
-TokenList tokenize(const char *text);
+void tokenize(const char *text, TokenList *output);
 void print_tokenlist(TokenList *list);
 
