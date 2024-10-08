@@ -123,8 +123,8 @@ static Token parse_string_literal(Lexer *lexer)
 
 	Token token;
 
-	token.start = lexer->text;
-	
+	token.start = &lexer->text[lexer->current];
+
 	while (peek(lexer) != '\0' && peek(lexer) != quote) {
 		if (peek(lexer) == '\\') {
 			consume(lexer);
