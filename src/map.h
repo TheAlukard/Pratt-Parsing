@@ -6,10 +6,12 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 #include "lexer.h"
+#include "value.h"
 
 #define KEY Token
-#define VALUE double
+#define VALUE Value
 
 #define CMP(key, other) (memcmp((key).start, (other).start, (key).len > (other).len ? (key).len : (other).len) == 0) 
 

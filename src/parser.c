@@ -1,19 +1,20 @@
 #include "parser.h"
 #include "lexer.h"
+#include "value.h"
 #include <math.h> 
 #include <string.h>
 #include <stdbool.h>
 #include <stdlib.h>
 
-double unary(Parser *parser);
-double binary(Parser *parser);
-double number(Parser *parser);
-double grouping(Parser *parser);
-double ans(Parser *parser);
-double identifier(Parser *parser);
-double exit_prog(Parser *parser);
-double declare(Parser *parser);
-double get_var(Parser *parser);
+Value unary(Parser *parser);
+Value binary(Parser *parser);
+Value number(Parser *parser);
+Value grouping(Parser *parser);
+Value ans(Parser *parser);
+Value identifier(Parser *parser);
+Value exit_prog(Parser *parser);
+Value declare(Parser *parser);
+Value get_var(Parser *parser);
 
 ParseRule rules[] = {
     {number, NULL, PREC_NONE},
@@ -49,7 +50,7 @@ ParseRule rules[] = {
 	{NULL, NULL, PREC_NONE},
 };
 
-double exit_prog(Parser *parser)
+Value exit_prog(Parser *parser)
 {
 	(void)(parser);
     exit(0);
@@ -64,7 +65,7 @@ Parser parser_create()
 {
     Parser parser;
     parser.current = 0;
-    parser.ans = 0;
+    parser.ans = VAL_NUM(0);
     parser.map = map_new();
     
     return parser;
@@ -104,20 +105,20 @@ Token expect(Parser *parser, TokenType expected)
     }
 }
 
-double expression(Parser *parser, precedence rbp)
+Value expression(Parser *parser, precedence rbp)
 {
     Token token = consume(parser);
-    double result = get_rule(token)->prefix(parser);
+    Value result = get_rule(token)->prefix(parser);
 
     while ((int)rbp < get_rule(peek(parser))->lbp) {
         token = consume(parser);
-        double right = get_rule(token)->infix(parser); 
+        Value right = get_rule(token)->infix(parser); 
         switch (token.type) {
-            case TOKEN_PLUS: result = result + right; break;
-            case TOKEN_MINUS: result = result - right; break;
-            case TOKEN_STAR: result = result * right; break;
-            case TOKEN_SLASH: result = result / right; break;
-            case TOKEN_CARET: result = pow(result, right); break;
+            case TOKEN_PLUS: AS_NUM(result) = AS_NUM(result) + AS_NUM(right); break;
+            case TOKEN_MINUS: AS_NUM(result) = AS_NUM(result) - AS_NUM(right); break;
+            case TOKEN_STAR: AS_NUM(result) = AS_NUM(result) * AS_NUM(right); break;
+            case TOKEN_SLASH: AS_NUM(result) = AS_NUM(result) / AS_NUM(right); break;
+            case TOKEN_CARET: AS_NUM(result) = pow(AS_NUM(result), AS_NUM(right)); break;
             default: break;// Unreachable
         }
     }
@@ -125,37 +126,38 @@ double expression(Parser *parser, precedence rbp)
     return result;
 }
 
-double parse_expr(Parser *parser)
+Value parse_expr(Parser *parser)
 {
-    double result = expression(parser, PREC_NONE);
+    Value result = expression(parser, PREC_NONE);
     parser->ans = result;
 
     return result;
 }
 
-double ans(Parser *parser)
+Value ans(Parser *parser)
 {
     return parser->ans;
 }
 
-double grouping(Parser *parser)
+Value grouping(Parser *parser)
 {
-    double result = expression(parser, PREC_NONE);
+    Value result = expression(parser, PREC_NONE);
     expect(parser, TOKEN_RIGHT_PAREN);
 
     return result;
 }
 
-double unary(Parser *parser)
+Value unary(Parser *parser)
 {
-    double result = expression(parser, PREC_UNARY);
+    Value result = expression(parser, PREC_UNARY);
+	AS_NUM(result) *= -1;
 
-    return -result;
+    return result;
 }
 
-double binary(Parser *parser)
+Value binary(Parser *parser)
 {
-    double result = expression(parser, get_rule(prev(parser))->lbp);
+    Value result = expression(parser, get_rule(prev(parser))->lbp);
 
     return result;
 }
@@ -190,85 +192,85 @@ typedef enum {
     PI,
 } MathFunc;
 
-double math_func(Parser *parser, MathFunc func)
+Value math_func(Parser *parser, MathFunc func)
 {
-    double r1, r2;
+    Value r1, r2;
 
     switch (func) {
         case SIN:
             expect(parser, TOKEN_LEFT_PAREN);
-            return sin(grouping(parser)); 
+            return VAL_NUM(sin(AS_NUM(grouping(parser)))); 
         case COS:
             expect(parser, TOKEN_LEFT_PAREN);
-            return cos(grouping(parser));
+            return VAL_NUM(cos(AS_NUM(grouping(parser))));
         case TAN:
             expect(parser, TOKEN_LEFT_PAREN);
-            return tan(grouping(parser));
+            return VAL_NUM(tan(AS_NUM(grouping(parser))));
         case ASIN:
             expect(parser, TOKEN_LEFT_PAREN);
-            return asin(grouping(parser));
+            return VAL_NUM(asin(AS_NUM(grouping(parser))));
         case ACOS:
             expect(parser, TOKEN_LEFT_PAREN);
-            return acos(grouping(parser));
+            return VAL_NUM(acos(AS_NUM(grouping(parser))));
         case ATAN:
             expect(parser, TOKEN_LEFT_PAREN);
-            return atan(grouping(parser));
+            return VAL_NUM(atan(AS_NUM(grouping(parser))));
         case ATAN2:
             expect(parser, TOKEN_LEFT_PAREN);
             r1 = expression(parser, PREC_NONE);
             expect(parser, TOKEN_COMMA);
             r2 = grouping(parser);
-            return atan2(r1, r2);
+            return VAL_NUM(atan2(AS_NUM(r1), AS_NUM(r2)));
         case SINH:
             expect(parser, TOKEN_LEFT_PAREN);
-            return sinh(grouping(parser));
+            return VAL_NUM(sinh(AS_NUM(grouping(parser))));
         case COSH:
             expect(parser, TOKEN_LEFT_PAREN);
-            return cosh(grouping(parser));
+            return VAL_NUM(cosh(AS_NUM(grouping(parser))));
         case TANH:
             expect(parser, TOKEN_LEFT_PAREN);
-            return tanh(grouping(parser));
+            return VAL_NUM(tanh(AS_NUM(grouping(parser))));
         case ASINH:
             expect(parser, TOKEN_LEFT_PAREN);
-            return asinh(grouping(parser));
+            return VAL_NUM(asinh(AS_NUM(grouping(parser))));
         case ACOSH:
             expect(parser, TOKEN_LEFT_PAREN);
-            return acosh(grouping(parser));
+            return VAL_NUM(acosh(AS_NUM(grouping(parser))));
         case ATANH:
             expect(parser, TOKEN_LEFT_PAREN);
-            return atanh(grouping(parser));
+            return VAL_NUM(atanh(AS_NUM(grouping(parser))));
         case EXP:
             expect(parser, TOKEN_LEFT_PAREN);
-            return exp(grouping(parser));
+            return VAL_NUM(exp(AS_NUM(grouping(parser))));
         case LOG:
             expect(parser, TOKEN_LEFT_PAREN);
-            return log(grouping(parser));
+            return VAL_NUM(log(AS_NUM(grouping(parser))));
         case LOG10:
             expect(parser, TOKEN_LEFT_PAREN);
-            return log10(grouping(parser));
+            return VAL_NUM(log10(AS_NUM(grouping(parser))));
         case LOG2:
             expect(parser, TOKEN_LEFT_PAREN);
-            return log2(grouping(parser));
+            return VAL_NUM(log2(AS_NUM(grouping(parser))));
         case CEIL:
             expect(parser, TOKEN_LEFT_PAREN);
-            return ceil(grouping(parser));
+            return VAL_NUM(ceil(AS_NUM(grouping(parser))));
         case FLOOR:
             expect(parser, TOKEN_LEFT_PAREN);
-            return floor(grouping(parser));
+            return VAL_NUM(floor(AS_NUM(grouping(parser))));
         case ROUND:
             expect(parser, TOKEN_LEFT_PAREN);
-            return round(grouping(parser));
+            return VAL_NUM(round(AS_NUM(grouping(parser))));
         case SQRT:
             expect(parser, TOKEN_LEFT_PAREN);
-            return sqrt(grouping(parser));
+            return VAL_NUM(sqrt(AS_NUM(grouping(parser))));
         case PI:
-            return 3.14159265358979323846f;
+            return VAL_NUM(3.14159265358979323846f);
 		default:
-			return 0;
+			return VAL_NUM(0);
     }
 }
 
-double identifier(Parser *parser)
+Value identifier(Parser *parser)
 {
     // math funcs 
     // sin
@@ -313,11 +315,11 @@ double identifier(Parser *parser)
     exit(1);
 }
 
-double declare(Parser *parser)
+Value declare(Parser *parser)
 {
     Token ident = consume(parser); 
     expect(parser, TOKEN_EQUAL); 
-    double result = expression(parser, PREC_NONE);
+    Value result = expression(parser, PREC_NONE);
 
     if (! map_has(&parser->map, ident)) {
         char *name = (char*)malloc(sizeof(char) * ident.len);
@@ -336,7 +338,7 @@ double declare(Parser *parser)
     return result;
 }
 
-double get_var(Parser *parser)
+Value get_var(Parser *parser)
 {
     Token ident = expect(parser, TOKEN_IDENTIFIER); 
     
@@ -344,22 +346,22 @@ double get_var(Parser *parser)
         fprintf(stderr, "Error: Variable '%.*s' doesn't exist\n", ident.len, ident.start);
         for (size_t i = 0; i < parser->map.capacity; i++) {
             if (parser->map.items[i].valid) {
-                printf("Key: %.*s, Value: %lf\n", parser->map.items[i].key.len, parser->map.items[i].key.start, parser->map.items[i].value);
+                printf("Key: %.*s, Value: %lf\n", parser->map.items[i].key.len, parser->map.items[i].key.start, AS_NUM(parser->map.items[i].value));
             }
         }
         exit(1);
     }
-    double result = map_get(&parser->map, ident);
+    Value result = map_get(&parser->map, ident);
 
     return result;
 }
 
-double number(Parser *parser)
+Value number(Parser *parser)
 {
     Token num = prev(parser);
     char temp[num.len + 1];
     memcpy(temp, num.start, num.len * sizeof(char));
     temp[num.len] = '\0';
 
-    return strtod(temp, NULL); 
+    return VAL_NUM(strtod(temp, NULL));
 }

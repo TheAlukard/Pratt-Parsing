@@ -1,8 +1,6 @@
 #include "map.h"
 #include <stdlib.h>
 #include <stdint.h>
-#include <string.h>
-#include <stdio.h>
 
 uint32_t hash(Token token)
 {
