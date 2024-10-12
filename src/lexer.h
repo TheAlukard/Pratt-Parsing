@@ -32,6 +32,7 @@ typedef enum {
 	TOKEN_FALSE,
     TOKEN_END,
     TOKEN_ERROR,
+	TOKEN_COUNT,
 } TokenType;
 
 typedef struct {

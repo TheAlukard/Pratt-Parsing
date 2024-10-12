@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <assert.h>
 
 Value unary(Parser *parser);
 Value binary(Parser *parser);
@@ -15,10 +16,12 @@ Value identifier(Parser *parser);
 Value exit_prog(Parser *parser);
 Value declare(Parser *parser);
 Value get_var(Parser *parser);
+Value string(Parser *parser);
+Value boolean(Parser *parser);
 
-ParseRule rules[] = {
+ParseRule rules[TOKEN_COUNT] = {
     {number, NULL, PREC_NONE},
-    {NULL, NULL, PREC_NONE},
+    {string, NULL, PREC_NONE},
     {NULL, binary, PREC_ADSUB},
     {unary, binary, PREC_ADSUB},
     {NULL, binary, PREC_MULDIV},
@@ -33,19 +36,17 @@ ParseRule rules[] = {
     {identifier, NULL, PREC_NONE},
     {declare, NULL, PREC_NONE},
     {exit_prog, NULL, PREC_NONE},
-    {NULL, NULL, PREC_NONE},
-    {NULL, NULL, PREC_NONE},
-	{NULL, NULL, PREC_NONE},
-	{NULL, NULL, PREC_NONE},
-	{NULL, NULL, PREC_NONE},
-	{NULL, NULL, PREC_NONE},
-	{NULL, NULL, PREC_NONE},
-	{NULL, NULL, PREC_NONE},
-	{NULL, NULL, PREC_NONE},
-	{NULL, NULL, PREC_NONE},
-	{NULL, NULL, PREC_NONE},
-	{NULL, NULL, PREC_NONE},
-	{NULL, NULL, PREC_NONE},
+    {NULL, binary, PREC_OR},
+    {NULL, binary, PREC_AND},
+	{NULL, binary, PREC_EQUALITY},
+	{unary, NULL, PREC_UNARY},
+	{NULL, binary, PREC_EQUALITY},
+	{NULL, binary, PREC_COMP},
+	{NULL, binary, PREC_COMP},
+	{NULL, binary, PREC_COMP},
+	{NULL, binary, PREC_COMP},
+	{boolean, NULL, PREC_NONE},
+	{boolean, NULL, PREC_NONE},
 	{NULL, NULL, PREC_NONE},
 	{NULL, NULL, PREC_NONE},
 };
@@ -105,25 +106,111 @@ Token expect(Parser *parser, TokenType expected)
     }
 }
 
+Value do_operation(Value left, Value right, Token oper)
+{
+	if (left.type != right.type) {
+		char buffer1[100];
+		value_to_str(buffer1, &left);
+		char buffer2[100];
+		value_to_str(buffer2, &right);
+
+		fprintf(stderr, "Error: Value: %s of type: %s has a different type than Value: %s of type: %s\n",
+				buffer1, value_type_to_str(left.type), buffer2, value_type_to_str(right.type));
+
+		exit(1);
+	}
+
+	Value result;
+
+	#define invalid_op()\
+		do { \
+			fprintf(stderr, "Error: Can't perform this operation: %.*s on a value of this type: %s\n",\
+					oper.len, oper.start, value_type_to_str(left.type));\
+			exit(1);\
+		} while (0)
+
+	switch (oper.type) {
+		case TOKEN_PLUS: 
+			switch (left.type) {
+				case VALUE_BOOL: invalid_op(); break;
+				case VALUE_NUM: result = VAL_NUM(AS_NUM(left) + AS_NUM(right)); break;
+				case VALUE_STR: result = VAL_STR(string_add(&AS_STR(left), &AS_STR(right))); break;
+			}
+			break;
+		case TOKEN_MINUS: 
+			if (left.type != VALUE_NUM) invalid_op();
+			else result = VAL_NUM(AS_NUM(left) - AS_NUM(right));
+			break;
+		case TOKEN_STAR:  
+			if (left.type != VALUE_NUM) invalid_op();
+			else result = VAL_NUM(AS_NUM(left) * AS_NUM(right));
+			break;
+		case TOKEN_SLASH: 
+			if (left.type != VALUE_NUM) invalid_op();
+			else result = VAL_NUM(AS_NUM(left) / AS_NUM(right));
+			break;
+		case TOKEN_CARET: 
+			if (left.type != VALUE_NUM) invalid_op();
+			else result = VAL_NUM(pow(AS_NUM(left), AS_NUM(right)));
+			break;
+		case TOKEN_EQEQ:
+			switch (left.type) {
+				case VALUE_NUM:  result = VAL_BOOL(AS_NUM(left) == AS_NUM(right)); break;
+				case VALUE_STR:  result = VAL_BOOL(string_compare(&AS_STR(left), &AS_STR(right))); break;
+				case VALUE_BOOL: result = VAL_BOOL(AS_BOOL(left) == AS_BOOL(right)); break;
+			}
+			break;
+		case TOKEN_NOTEQ:
+			switch (left.type) {
+				case VALUE_NUM:  result = VAL_BOOL(AS_NUM(left) != AS_NUM(right)); break;
+				case VALUE_STR:  result = VAL_BOOL(!string_compare(&AS_STR(left), &AS_STR(right))); break;
+				case VALUE_BOOL: result = VAL_BOOL(AS_BOOL(left) != AS_BOOL(right)); break;
+			}
+			break;
+		case TOKEN_LESS: 
+			if (left.type != VALUE_NUM) invalid_op();
+			else result = VAL_BOOL(AS_NUM(left) < AS_NUM(right));
+			break;
+		case TOKEN_LESSEQ:
+			if (left.type != VALUE_NUM) invalid_op();
+			else result = VAL_BOOL(AS_NUM(left) <= AS_NUM(right));
+			break;
+		case TOKEN_GREATER:
+			if (left.type != VALUE_NUM) invalid_op();
+			else result = VAL_BOOL(AS_NUM(left) > AS_NUM(right));
+			break;
+		case TOKEN_GREATEREQ:
+			if (left.type != VALUE_NUM) invalid_op();
+			else result = VAL_BOOL(AS_NUM(left) >= AS_NUM(right));
+			break;
+		case TOKEN_OR: 
+			if (left.type != VALUE_BOOL) invalid_op();
+			else result = VAL_BOOL(AS_BOOL(left) || AS_BOOL(right));
+			break;
+		case TOKEN_AND: 
+			if (left.type != VALUE_BOOL) invalid_op();
+			else result = VAL_BOOL(AS_BOOL(left) && AS_BOOL(right));
+			break;
+		default: break; // Unreachable
+	}
+
+	#undef invalid_op
+
+	return result;
+}
+
 Value expression(Parser *parser, precedence rbp)
 {
     Token token = consume(parser);
-    Value result = get_rule(token)->prefix(parser);
+    Value left = get_rule(token)->prefix(parser);
 
     while ((int)rbp < get_rule(peek(parser))->lbp) {
         token = consume(parser);
         Value right = get_rule(token)->infix(parser); 
-        switch (token.type) {
-            case TOKEN_PLUS: AS_NUM(result) = AS_NUM(result) + AS_NUM(right); break;
-            case TOKEN_MINUS: AS_NUM(result) = AS_NUM(result) - AS_NUM(right); break;
-            case TOKEN_STAR: AS_NUM(result) = AS_NUM(result) * AS_NUM(right); break;
-            case TOKEN_SLASH: AS_NUM(result) = AS_NUM(result) / AS_NUM(right); break;
-            case TOKEN_CARET: AS_NUM(result) = pow(AS_NUM(result), AS_NUM(right)); break;
-            default: break;// Unreachable
-        }
+		left = do_operation(left, right, token);
     }
 
-    return result;
+    return left;
 }
 
 Value parse_expr(Parser *parser)
@@ -149,8 +236,14 @@ Value grouping(Parser *parser)
 
 Value unary(Parser *parser)
 {
+	Token token = prev(parser);
     Value result = expression(parser, PREC_UNARY);
-	AS_NUM(result) *= -1;
+
+	switch (token.type) {
+		case TOKEN_NOT:   result = VAL_BOOL(!AS_BOOL(result));   break;
+		case TOKEN_MINUS: result = VAL_NUM(AS_NUM(result) * -1); break;
+		default: break;
+	}
 
     return result;
 }
@@ -321,7 +414,7 @@ Value declare(Parser *parser)
     expect(parser, TOKEN_EQUAL); 
     Value result = expression(parser, PREC_NONE);
 
-    if (! map_has(&parser->map, ident)) {
+    if (!map_has(&parser->map, ident)) {
         char *name = (char*)malloc(sizeof(char) * ident.len);
         Token key = {
             .start = name,
@@ -340,13 +433,17 @@ Value declare(Parser *parser)
 
 Value get_var(Parser *parser)
 {
-    Token ident = expect(parser, TOKEN_IDENTIFIER); 
+    Token ident = expect(parser, TOKEN_IDENTIFIER);
     
-    if (! map_has(&parser->map, ident)) {
+    if (!map_has(&parser->map, ident)) {
         fprintf(stderr, "Error: Variable '%.*s' doesn't exist\n", ident.len, ident.start);
         for (size_t i = 0; i < parser->map.capacity; i++) {
             if (parser->map.items[i].valid) {
-                printf("Key: %.*s, Value: %lf\n", parser->map.items[i].key.len, parser->map.items[i].key.start, AS_NUM(parser->map.items[i].value));
+				Token key = parser->map.items[i].key;
+				Value value = parser->map.items[i].value;
+				char buffer[100];
+				value_to_str(buffer, &value);
+				printf("Key: %.*s, Value: %s\n", key.len, key.start, buffer);
             }
         }
         exit(1);
@@ -359,9 +456,24 @@ Value get_var(Parser *parser)
 Value number(Parser *parser)
 {
     Token num = prev(parser);
-    char temp[num.len + 1];
-    memcpy(temp, num.start, num.len * sizeof(char));
-    temp[num.len] = '\0';
+	char temp[100];
+	sprintf(temp, "%.*s", num.len, num.start);
+    Value result = VAL_NUM(strtod(temp, NULL));
 
-    return VAL_NUM(strtod(temp, NULL));
+    return result;
+}
+
+Value string(Parser *parser)
+{
+	Token token = prev(parser);
+	String str = string_create(token.start, token.len);
+
+	return VAL_STR(str);
+}
+
+Value boolean(Parser *parser)
+{
+	Token token = prev(parser);
+
+	return token.type == TOKEN_TRUE ? VAL_BOOL(true) : VAL_BOOL(false);
 }

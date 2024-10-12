@@ -6,6 +6,10 @@
 
 typedef enum {
     PREC_NONE,
+	PREC_OR,
+	PREC_AND,
+	PREC_EQUALITY,
+	PREC_COMP,
     PREC_ADSUB,
     PREC_MULDIV,
     PREC_POW,

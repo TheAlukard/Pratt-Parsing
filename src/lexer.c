@@ -36,7 +36,7 @@ static Token match_identifier(Lexer *lexer, const char *text, int len, TokenType
 {
     int start = lexer->current;
 
-    Token token;
+    Token token = {0};
 
     while (isalnum(peek(lexer))) {
         consume(lexer);
@@ -57,64 +57,29 @@ static Token match_identifier(Lexer *lexer, const char *text, int len, TokenType
     return token;
 }
 
-static Token match(Lexer *lexer, const char *text, int len, TokenType type, int(*cmp)(int))
+static void match(Lexer *lexer, Token *token, char expected, TokenType type)
 {
-    int start = lexer->current;
-
-    Token token;
-
-    while (!cmp(peek(lexer))) {
-        consume(lexer);
-    }
-
-    if (lexer->current - start == len) {
-        if (memcmp(&lexer->text[start], text, len) == 0) {
-            token.type = type;
-        }
-    }
-    else {
-		fprintf(stderr, "Unexpected Token: %.*s\n", token.len, token.start);
-		exit(1);
-    }
-
-    token.start = &lexer->text[start];
-    token.len = lexer->current - start;
-
-    return token;
-}
-
-static Token this_or_that(Lexer *lexer, const char *first, TokenType first_type, const char *second, TokenType second_type, int(*cmp)(int))
-{
-	int start = lexer->current;
-
-	Token token;
-
-	while (!cmp(peek(lexer))) {
+	if (peek(lexer) == expected) {
 		consume(lexer);
-	}
-
-	int first_len = strlen(first);
-	int second_len = strlen(second);
-
-	if (lexer->current - start == first_len) {
-		if (memcmp(&lexer->text[start], first, first_len) == 0) {
-			token.type = first_type;
-		}
-	}
-	else if (lexer->current - start == second_len) {
-		if (memcmp(&lexer->text[start], second, second_len) == 0) {
-			token.type = second_type;
-		}
+		token->len = 2;
+		token->type = type;
 	}
 	else {
-		fprintf(stderr, "Unexpected Token: %.*s\n", token.len, token.start);
-		exit(1);
+		fprintf(stderr, "Error: Unexpected Token\n");
 	}
+}
 
-	token.start = &lexer->text[start];
-	token.len = lexer->current - start;
-
-	return token;
+static void this_or_that(Lexer *lexer, Token *token, char expected, TokenType first_type, TokenType second_type)
+{
+	if (peek(lexer) == expected) {
+		consume(lexer);
+		token->len = 2;
+		token->type = second_type;
+	}
+	else {
+		token->len = 1;
+		token->type = first_type;
+	}
 }
 
 static Token parse_string_literal(Lexer *lexer)
@@ -230,22 +195,34 @@ static Token scan_token(Lexer *lexer)
 				consume(lexer);
 				break;
             case '=':
-				token = this_or_that(lexer, "=", TOKEN_EQUAL, "==", TOKEN_EQEQ, isspace);	
+				token.start = &lexer->text[lexer->current];
+				consume(lexer);
+				this_or_that(lexer, &token, '=', TOKEN_EQUAL, TOKEN_EQEQ);	
 				break;
 			case '&':
-				token = match(lexer, "&&", 2, TOKEN_AND, isspace);
+				token.start = &lexer->text[lexer->current];
+				consume(lexer);
+				match(lexer, &token, '&', TOKEN_AND);
 				break;
 			case '|':
-				token = match(lexer, "||", 2, TOKEN_OR, isspace);
+				token.start = &lexer->text[lexer->current];
+				consume(lexer);
+				match(lexer, &token, '|', TOKEN_OR);
 				break;
 			case '!':
-				token = this_or_that(lexer, "!", TOKEN_NOT, "!=", TOKEN_NOTEQ, isspace);
+				token.start = &lexer->text[lexer->current];
+				consume(lexer);
+				this_or_that(lexer, &token, '=', TOKEN_NOT, TOKEN_NOTEQ);
 				break;
 			case '<':
-				token = this_or_that(lexer, "<", TOKEN_LESS, "<=", TOKEN_LESSEQ, isspace);
+				token.start = &lexer->text[lexer->current];
+				consume(lexer);
+				this_or_that(lexer, &token, '=', TOKEN_LESS, TOKEN_LESSEQ);
 				break;
 			case '>':
-				token = this_or_that(lexer, ">", TOKEN_GREATER, ">=", TOKEN_GREATEREQ, isspace);
+				token.start = &lexer->text[lexer->current];
+				consume(lexer);
+				this_or_that(lexer, &token, '=', TOKEN_GREATER, TOKEN_GREATEREQ);
 				break;
             case 'a':
                 token = match_identifier(lexer, "ans", 3, TOKEN_ANS);

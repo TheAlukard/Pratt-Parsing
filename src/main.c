@@ -1,28 +1,42 @@
 #include <stdio.h>
-#include <ctype.h>
-#include <stdlib.h>
-#include <string.h>
 #include <stdbool.h>
 #include <math.h>
 #include "list.h"
 #include "lexer.h"
 #include "parser.h"
+#include "value.h"
+
+void print_value(Value value)
+{
+	switch (value.type) {
+		case VALUE_NUM:
+			printf("> %0.15lf\n", AS_NUM(value));
+			break;
+		case VALUE_STR:
+			printf("> %.*s\n", (int)AS_STR(value).len, AS_STR(value).data);
+			break;
+		case VALUE_BOOL:
+			printf ("> %s\n", AS_BOOL(value) ? "true" : "false");
+			break;
+	}
+}
 
 int main(void)
 {
-    const size_t buffer_len = 1000;
+	#define buffer_len 1000
     char buffer[buffer_len]; 
 	TokenList list = {0};
-    /* Parser parser = parser_create(); */
+	Parser parser = parser_create();
     
     while (true) {
         printf("> ");
         fgets(buffer, sizeof(char) * buffer_len, stdin);
 		list_clear(&list);
         tokenize(buffer, &list);
-		print_tokenlist(&list);
-        /* parser_reset(&parser, &list); */
-        /* printf("> %0.15lf\n", parse_expr(&parser)); */
+		/* print_tokenlist(&list); */
+		parser_reset(&parser, &list);
+		Value result = parse_expr(&parser);
+		print_value(result);
     }
 
 	list_free(&list);

@@ -53,7 +53,7 @@ bool map_set(Map *map, KEY key, VALUE value)
     for (uint32_t i = 0; i < map->capacity; i++) {
         uint32_t index = (hash_value + i) % map->capacity;
 
-        if (! map->items[index].valid) {
+        if (!map->items[index].valid) {
             map->items[index].key = key;
             map->items[index].value = value;
             map->items[index].valid = true;

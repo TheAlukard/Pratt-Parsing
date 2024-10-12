@@ -7,8 +7,6 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#define INLINE __attribute__((always_inline)) static inline
-
 #define array_len(array) (sizeof(array) / sizeof((array)[0]))
 
 #ifndef DEFAULT_LIST_CAP
@@ -58,7 +56,7 @@
     (list)->count += 1;                                                                  \
   } while (0)
 
-INLINE void* LIST_GET_POPPED(void* *list_items, size_t type_size, size_t *list_count, size_t *list_cap) 
+static inline void* LIST_GET_POPPED(void* *list_items, size_t type_size, size_t *list_count, size_t *list_cap) 
 {
     void *popped = NULL; 
 

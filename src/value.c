@@ -1,8 +1,9 @@
 #include "value.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-String string_create(char *text, size_t len)
+String string_create(const char *text, size_t len)
 {
 	String str;
 	str.len = len;
@@ -11,3 +12,50 @@ String string_create(char *text, size_t len)
 
 	return str;
 }
+
+void value_to_str(char *buffer, Value *value)
+{
+	switch (value->type) {
+		case VALUE_NUM:
+			sprintf(buffer, "%0.15lf", AS_NUM(*value));
+			break;
+		case VALUE_STR:
+			sprintf(buffer, "%.*s", (int)AS_STR(*value).len, AS_STR(*value).data);
+			break;
+		case VALUE_BOOL:
+			sprintf(buffer, "%s", AS_BOOL(*value) ? "true" : "false");
+			break;
+	}
+}
+
+char* value_type_to_str(ValueType type)
+{
+	switch (type) {
+		case VALUE_NUM: return "Number";
+		case VALUE_STR: return "String";
+		case VALUE_BOOL: return "Bool";
+	}
+
+	return NULL;
+}
+
+String string_add(String *one, String *two)
+{
+	String str;
+	str.len = one->len + two->len;
+	str.data = malloc(str.len * sizeof(char));
+	memcpy(str.data, one->data, one->len * sizeof(char));
+	memcpy(&str.data[one->len], two->data, two->len * sizeof(char));
+
+	return str;
+}
+
+bool string_compare(String* one, String *two)
+{
+	if (one->len == two->len) {
+		return memcmp(one->data, two->data, one->len * sizeof(char)) == 0;
+	}
+
+	return false;
+}
+
