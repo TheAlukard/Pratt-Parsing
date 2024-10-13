@@ -5,23 +5,23 @@
 #include "arena.h"
 
 typedef enum {
-	VALUE_NUM,
-	VALUE_STR,
-	VALUE_BOOL,
+    VALUE_NUM,
+    VALUE_STR,
+    VALUE_BOOL,
 } ValueType;
 
 typedef struct {
-	char *data;
-	size_t len;
+    char *data;
+    size_t len;
 } String;
 
 typedef struct {
-	ValueType type;
-	union {
-		double num;
-		String str;
-		bool   bol;
-	} as;
+    ValueType type;
+    union {
+        double num;
+        String str;
+        bool   bol;
+    } as;
 } Value;
 
 #define AS_NUM(val)  ((val).as.num)

@@ -38,22 +38,22 @@ ParseRule rules[TOKEN_COUNT] = {
     {exit_prog, NULL, PREC_NONE},
     {NULL, binary, PREC_OR},
     {NULL, binary, PREC_AND},
-	{NULL, binary, PREC_EQUALITY},
-	{unary, NULL, PREC_UNARY},
-	{NULL, binary, PREC_EQUALITY},
-	{NULL, binary, PREC_COMP},
-	{NULL, binary, PREC_COMP},
-	{NULL, binary, PREC_COMP},
-	{NULL, binary, PREC_COMP},
-	{boolean, NULL, PREC_NONE},
-	{boolean, NULL, PREC_NONE},
-	{NULL, NULL, PREC_NONE},
-	{NULL, NULL, PREC_NONE},
+    {NULL, binary, PREC_EQUALITY},
+    {unary, NULL, PREC_UNARY},
+    {NULL, binary, PREC_EQUALITY},
+    {NULL, binary, PREC_COMP},
+    {NULL, binary, PREC_COMP},
+    {NULL, binary, PREC_COMP},
+    {NULL, binary, PREC_COMP},
+    {boolean, NULL, PREC_NONE},
+    {boolean, NULL, PREC_NONE},
+    {NULL, NULL, PREC_NONE},
+    {NULL, NULL, PREC_NONE},
 };
 
 Value exit_prog(Parser *parser)
 {
-	(void)(parser);
+    (void)(parser);
     exit(0);
 }
 
@@ -68,7 +68,7 @@ Parser parser_create()
     parser.current = 0;
     parser.ans = VAL_NUM(0);
     parser.map = map_new();
-	parser.arena = arena_init(1024);
+    parser.arena = arena_init(1024);
     
     return parser;
 }
@@ -81,9 +81,9 @@ void parser_reset(Parser *parser, TokenList *list)
 
 void parser_destroy(Parser *parser)
 {
-	parser->current = 0;
-	arena_deinit(&parser->arena);
-	map_delete(&parser->map);
+    parser->current = 0;
+    arena_deinit(&parser->arena);
+    map_delete(&parser->map);
 }
 
 Token prev(Parser *parser)
@@ -116,95 +116,95 @@ Token expect(Parser *parser, TokenType expected)
 
 Value do_operation(Parser *parser, Value left, Value right, Token oper)
 {
-	if (left.type != right.type) {
-		char buffer1[100];
-		value_to_str(buffer1, &left);
-		char buffer2[100];
-		value_to_str(buffer2, &right);
+    if (left.type != right.type) {
+        char buffer1[100];
+        value_to_str(buffer1, &left);
+        char buffer2[100];
+        value_to_str(buffer2, &right);
 
-		fprintf(stderr, "Error: Value: %s of type: %s has a different type than Value: %s of type: %s\n",
-				buffer1, value_type_to_str(left.type), buffer2, value_type_to_str(right.type));
+        fprintf(stderr, "Error: Value: %s of type: %s has a different type than Value: %s of type: %s\n",
+                buffer1, value_type_to_str(left.type), buffer2, value_type_to_str(right.type));
 
-		exit(1);
-	}
+        exit(1);
+    }
 
-	Value result;
+    Value result;
 
-	#define invalid_op()\
-		do { \
-			fprintf(stderr, "Error: Can't perform this operation: %.*s on a value of this type: %s\n",\
-					oper.len, oper.start, value_type_to_str(left.type));\
-			exit(1);\
-		} while (0)
+    #define invalid_op()\
+        do { \
+            fprintf(stderr, "Error: Can't perform this operation: %.*s on a value of this type: %s\n",\
+                    oper.len, oper.start, value_type_to_str(left.type));\
+            exit(1);\
+        } while (0)
 
-	switch (oper.type) {
-		case TOKEN_PLUS: 
-			switch (left.type) {
-				case VALUE_BOOL: invalid_op(); break;
-				case VALUE_NUM: result = VAL_NUM(AS_NUM(left) + AS_NUM(right)); break;
-				case VALUE_STR: result = VAL_STR(string_add(&parser->arena, &AS_STR(left), &AS_STR(right))); break;
-			}
-			break;
-		case TOKEN_MINUS: 
-			if (left.type != VALUE_NUM) invalid_op();
-			else result = VAL_NUM(AS_NUM(left) - AS_NUM(right));
-			break;
-		case TOKEN_STAR:  
-			if (left.type != VALUE_NUM) invalid_op();
-			else result = VAL_NUM(AS_NUM(left) * AS_NUM(right));
-			break;
-		case TOKEN_SLASH: 
-			if (left.type != VALUE_NUM) invalid_op();
-			else result = VAL_NUM(AS_NUM(left) / AS_NUM(right));
-			break;
-		case TOKEN_CARET: 
-			if (left.type != VALUE_NUM) invalid_op();
-			else result = VAL_NUM(pow(AS_NUM(left), AS_NUM(right)));
-			break;
-		case TOKEN_EQEQ:
-			switch (left.type) {
-				case VALUE_NUM:  result = VAL_BOOL(AS_NUM(left) == AS_NUM(right)); break;
-				case VALUE_STR:  result = VAL_BOOL(string_compare(&AS_STR(left), &AS_STR(right))); break;
-				case VALUE_BOOL: result = VAL_BOOL(AS_BOOL(left) == AS_BOOL(right)); break;
-			}
-			break;
-		case TOKEN_NOTEQ:
-			switch (left.type) {
-				case VALUE_NUM:  result = VAL_BOOL(AS_NUM(left) != AS_NUM(right)); break;
-				case VALUE_STR:  result = VAL_BOOL(!string_compare(&AS_STR(left), &AS_STR(right))); break;
-				case VALUE_BOOL: result = VAL_BOOL(AS_BOOL(left) != AS_BOOL(right)); break;
-			}
-			break;
-		case TOKEN_LESS: 
-			if (left.type != VALUE_NUM) invalid_op();
-			else result = VAL_BOOL(AS_NUM(left) < AS_NUM(right));
-			break;
-		case TOKEN_LESSEQ:
-			if (left.type != VALUE_NUM) invalid_op();
-			else result = VAL_BOOL(AS_NUM(left) <= AS_NUM(right));
-			break;
-		case TOKEN_GREATER:
-			if (left.type != VALUE_NUM) invalid_op();
-			else result = VAL_BOOL(AS_NUM(left) > AS_NUM(right));
-			break;
-		case TOKEN_GREATEREQ:
-			if (left.type != VALUE_NUM) invalid_op();
-			else result = VAL_BOOL(AS_NUM(left) >= AS_NUM(right));
-			break;
-		case TOKEN_OR: 
-			if (left.type != VALUE_BOOL) invalid_op();
-			else result = VAL_BOOL(AS_BOOL(left) || AS_BOOL(right));
-			break;
-		case TOKEN_AND: 
-			if (left.type != VALUE_BOOL) invalid_op();
-			else result = VAL_BOOL(AS_BOOL(left) && AS_BOOL(right));
-			break;
-		default: break; // Unreachable
-	}
+    switch (oper.type) {
+        case TOKEN_PLUS: 
+            switch (left.type) {
+                case VALUE_BOOL: invalid_op(); break;
+                case VALUE_NUM: result = VAL_NUM(AS_NUM(left) + AS_NUM(right)); break;
+                case VALUE_STR: result = VAL_STR(string_add(&parser->arena, &AS_STR(left), &AS_STR(right))); break;
+            }
+            break;
+        case TOKEN_MINUS: 
+            if (left.type != VALUE_NUM) invalid_op();
+            else result = VAL_NUM(AS_NUM(left) - AS_NUM(right));
+            break;
+        case TOKEN_STAR:  
+            if (left.type != VALUE_NUM) invalid_op();
+            else result = VAL_NUM(AS_NUM(left) * AS_NUM(right));
+            break;
+        case TOKEN_SLASH: 
+            if (left.type != VALUE_NUM) invalid_op();
+            else result = VAL_NUM(AS_NUM(left) / AS_NUM(right));
+            break;
+        case TOKEN_CARET: 
+            if (left.type != VALUE_NUM) invalid_op();
+            else result = VAL_NUM(pow(AS_NUM(left), AS_NUM(right)));
+            break;
+        case TOKEN_EQEQ:
+            switch (left.type) {
+                case VALUE_NUM:  result = VAL_BOOL(AS_NUM(left) == AS_NUM(right)); break;
+                case VALUE_STR:  result = VAL_BOOL(string_compare(&AS_STR(left), &AS_STR(right))); break;
+                case VALUE_BOOL: result = VAL_BOOL(AS_BOOL(left) == AS_BOOL(right)); break;
+            }
+            break;
+        case TOKEN_NOTEQ:
+            switch (left.type) {
+                case VALUE_NUM:  result = VAL_BOOL(AS_NUM(left) != AS_NUM(right)); break;
+                case VALUE_STR:  result = VAL_BOOL(!string_compare(&AS_STR(left), &AS_STR(right))); break;
+                case VALUE_BOOL: result = VAL_BOOL(AS_BOOL(left) != AS_BOOL(right)); break;
+            }
+            break;
+        case TOKEN_LESS: 
+            if (left.type != VALUE_NUM) invalid_op();
+            else result = VAL_BOOL(AS_NUM(left) < AS_NUM(right));
+            break;
+        case TOKEN_LESSEQ:
+            if (left.type != VALUE_NUM) invalid_op();
+            else result = VAL_BOOL(AS_NUM(left) <= AS_NUM(right));
+            break;
+        case TOKEN_GREATER:
+            if (left.type != VALUE_NUM) invalid_op();
+            else result = VAL_BOOL(AS_NUM(left) > AS_NUM(right));
+            break;
+        case TOKEN_GREATEREQ:
+            if (left.type != VALUE_NUM) invalid_op();
+            else result = VAL_BOOL(AS_NUM(left) >= AS_NUM(right));
+            break;
+        case TOKEN_OR: 
+            if (left.type != VALUE_BOOL) invalid_op();
+            else result = VAL_BOOL(AS_BOOL(left) || AS_BOOL(right));
+            break;
+        case TOKEN_AND: 
+            if (left.type != VALUE_BOOL) invalid_op();
+            else result = VAL_BOOL(AS_BOOL(left) && AS_BOOL(right));
+            break;
+        default: break; // Unreachable
+    }
 
-	#undef invalid_op
+    #undef invalid_op
 
-	return result;
+    return result;
 }
 
 Value expression(Parser *parser, precedence rbp)
@@ -215,7 +215,7 @@ Value expression(Parser *parser, precedence rbp)
     while ((int)rbp < get_rule(peek(parser))->lbp) {
         token = consume(parser);
         Value right = get_rule(token)->infix(parser); 
-		left = do_operation(parser, left, right, token);
+        left = do_operation(parser, left, right, token);
     }
 
     return left;
@@ -244,14 +244,14 @@ Value grouping(Parser *parser)
 
 Value unary(Parser *parser)
 {
-	Token token = prev(parser);
+    Token token = prev(parser);
     Value result = expression(parser, PREC_UNARY);
 
-	switch (token.type) {
-		case TOKEN_NOT:   result = VAL_BOOL(!AS_BOOL(result));   break;
-		case TOKEN_MINUS: result = VAL_NUM(AS_NUM(result) * -1); break;
-		default: break;
-	}
+    switch (token.type) {
+        case TOKEN_NOT:   result = VAL_BOOL(!AS_BOOL(result));   break;
+        case TOKEN_MINUS: result = VAL_NUM(AS_NUM(result) * -1); break;
+        default: break;
+    }
 
     return result;
 }
@@ -366,8 +366,8 @@ Value math_func(Parser *parser, MathFunc func)
             return VAL_NUM(sqrt(AS_NUM(grouping(parser))));
         case PI:
             return VAL_NUM(3.14159265358979323846f);
-		default:
-			return VAL_NUM(0);
+        default:
+            return VAL_NUM(0);
     }
 }
 
@@ -422,9 +422,9 @@ Value declare(Parser *parser)
     expect(parser, TOKEN_EQUAL); 
     Value result = expression(parser, PREC_NONE);
 
-	if (result.type == VALUE_STR) {
-		result = VAL_STR(string_create(AS_STR(result).data, AS_STR(result).len));
-	}
+    if (result.type == VALUE_STR) {
+        result = VAL_STR(string_create(AS_STR(result).data, AS_STR(result).len));
+    }
 
     if (!map_has(&parser->map, ident)) {
         char *name = (char*)malloc(sizeof(char) * ident.len);
@@ -437,10 +437,10 @@ Value declare(Parser *parser)
         map_set(&parser->map, key, result);
     }
     else {
-		Value val = map_get(&parser->map, ident);
-		if (val.type == VALUE_STR) {
-			string_destroy(&AS_STR(val));
-		}
+        Value val = map_get(&parser->map, ident);
+        if (val.type == VALUE_STR) {
+            string_destroy(&AS_STR(val));
+        }
         map_set(&parser->map, ident, result);
     }
 
@@ -455,11 +455,11 @@ Value get_var(Parser *parser)
         fprintf(stderr, "Error: Variable '%.*s' doesn't exist\n", ident.len, ident.start);
         for (size_t i = 0; i < parser->map.capacity; i++) {
             if (parser->map.items[i].valid) {
-				Token key = parser->map.items[i].key;
-				Value value = parser->map.items[i].value;
-				char buffer[100];
-				value_to_str(buffer, &value);
-				printf("Key: %.*s, Value: %s\n", key.len, key.start, buffer);
+                Token key = parser->map.items[i].key;
+                Value value = parser->map.items[i].value;
+                char buffer[100];
+                value_to_str(buffer, &value);
+                printf("Key: %.*s, Value: %s\n", key.len, key.start, buffer);
             }
         }
         exit(1);
@@ -472,8 +472,8 @@ Value get_var(Parser *parser)
 Value number(Parser *parser)
 {
     Token num = prev(parser);
-	char temp[100];
-	sprintf(temp, "%.*s", num.len, num.start);
+    char temp[100];
+    sprintf(temp, "%.*s", num.len, num.start);
     Value result = VAL_NUM(strtod(temp, NULL));
 
     return result;
@@ -481,15 +481,15 @@ Value number(Parser *parser)
 
 Value string(Parser *parser)
 {
-	Token token = prev(parser);
-	String str = string_create_arena(&parser->arena, token.start, token.len);
+    Token token = prev(parser);
+    String str = string_create_arena(&parser->arena, token.start, token.len);
 
-	return VAL_STR(str);
+    return VAL_STR(str);
 }
 
 Value boolean(Parser *parser)
 {
-	Token token = prev(parser);
+    Token token = prev(parser);
 
-	return token.type == TOKEN_TRUE ? VAL_BOOL(true) : VAL_BOOL(false);
+    return token.type == TOKEN_TRUE ? VAL_BOOL(true) : VAL_BOOL(false);
 }

@@ -28,12 +28,12 @@ Map map_new()
 
 void map_delete(Map *map)
 {
-	free(map->items);
-	map->items = NULL;
-	map->capacity = 0;
-	map->count = 0;
+    free(map->items);
+    map->items = NULL;
+    map->capacity = 0;
+    map->count = 0;
 
-	return;
+    return;
 }
 
 uint32_t map_get_hash(Map *map, KEY key)

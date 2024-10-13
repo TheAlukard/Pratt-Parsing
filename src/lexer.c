@@ -59,53 +59,53 @@ static Token match_identifier(Lexer *lexer, const char *text, int len, TokenType
 
 static void match(Lexer *lexer, Token *token, char expected, TokenType type)
 {
-	if (peek(lexer) == expected) {
-		consume(lexer);
-		token->len = 2;
-		token->type = type;
-	}
-	else {
-		fprintf(stderr, "Error: Unexpected Token\n");
-	}
+    if (peek(lexer) == expected) {
+        consume(lexer);
+        token->len = 2;
+        token->type = type;
+    }
+    else {
+        fprintf(stderr, "Error: Unexpected Token\n");
+    }
 }
 
 static void this_or_that(Lexer *lexer, Token *token, char expected, TokenType first_type, TokenType second_type)
 {
-	if (peek(lexer) == expected) {
-		consume(lexer);
-		token->len = 2;
-		token->type = second_type;
-	}
-	else {
-		token->len = 1;
-		token->type = first_type;
-	}
+    if (peek(lexer) == expected) {
+        consume(lexer);
+        token->len = 2;
+        token->type = second_type;
+    }
+    else {
+        token->len = 1;
+        token->type = first_type;
+    }
 }
 
 static Token parse_string_literal(Lexer *lexer)
 {
-	const char quote = consume(lexer);
+    const char quote = consume(lexer);
 
-	Token token;
+    Token token;
 
-	token.start = &lexer->text[lexer->current];
+    token.start = &lexer->text[lexer->current];
 
-	while (peek(lexer) != '\0' && peek(lexer) != quote) {
-		if (peek(lexer) == '\\') {
-			consume(lexer);
-		}
-		consume(lexer);	
-	}
+    while (peek(lexer) != '\0' && peek(lexer) != quote) {
+        if (peek(lexer) == '\\') {
+            consume(lexer);
+        }
+        consume(lexer); 
+    }
 
-	token.len = &lexer->text[lexer->current] - token.start;
-	token.type = TOKEN_STRING;
+    token.len = &lexer->text[lexer->current] - token.start;
+    token.type = TOKEN_STRING;
 
-	if (consume(lexer) != quote) {
-		fprintf(stderr, "Error: Mismatching quotes.");
-		exit(1);
-	}
-	
-	return token;
+    if (consume(lexer) != quote) {
+        fprintf(stderr, "Error: Mismatching quotes.");
+        exit(1);
+    }
+    
+    return token;
 }
 
 static Token scan_token(Lexer *lexer)
@@ -136,10 +136,10 @@ static Token scan_token(Lexer *lexer)
     }
     else {
         switch (c) {
-			case '\'':
-			case '"':
-				token = parse_string_literal(lexer);
-				break;
+            case '\'':
+            case '"':
+                token = parse_string_literal(lexer);
+                break;
             case '+':
                 token.type = TOKEN_PLUS;
                 token.start = &lexer->text[lexer->current];
@@ -188,42 +188,42 @@ static Token scan_token(Lexer *lexer)
                 token.len = 1;
                 consume(lexer);
                 break;
-			case '$':
-				token.type = TOKEN_DOLLAR;
-				token.start = &lexer->text[lexer->current];
-				token.len = 1;
-				consume(lexer);
-				break;
+            case '$':
+                token.type = TOKEN_DOLLAR;
+                token.start = &lexer->text[lexer->current];
+                token.len = 1;
+                consume(lexer);
+                break;
             case '=':
-				token.start = &lexer->text[lexer->current];
-				consume(lexer);
-				this_or_that(lexer, &token, '=', TOKEN_EQUAL, TOKEN_EQEQ);	
-				break;
-			case '&':
-				token.start = &lexer->text[lexer->current];
-				consume(lexer);
-				match(lexer, &token, '&', TOKEN_AND);
-				break;
-			case '|':
-				token.start = &lexer->text[lexer->current];
-				consume(lexer);
-				match(lexer, &token, '|', TOKEN_OR);
-				break;
-			case '!':
-				token.start = &lexer->text[lexer->current];
-				consume(lexer);
-				this_or_that(lexer, &token, '=', TOKEN_NOT, TOKEN_NOTEQ);
-				break;
-			case '<':
-				token.start = &lexer->text[lexer->current];
-				consume(lexer);
-				this_or_that(lexer, &token, '=', TOKEN_LESS, TOKEN_LESSEQ);
-				break;
-			case '>':
-				token.start = &lexer->text[lexer->current];
-				consume(lexer);
-				this_or_that(lexer, &token, '=', TOKEN_GREATER, TOKEN_GREATEREQ);
-				break;
+                token.start = &lexer->text[lexer->current];
+                consume(lexer);
+                this_or_that(lexer, &token, '=', TOKEN_EQUAL, TOKEN_EQEQ);  
+                break;
+            case '&':
+                token.start = &lexer->text[lexer->current];
+                consume(lexer);
+                match(lexer, &token, '&', TOKEN_AND);
+                break;
+            case '|':
+                token.start = &lexer->text[lexer->current];
+                consume(lexer);
+                match(lexer, &token, '|', TOKEN_OR);
+                break;
+            case '!':
+                token.start = &lexer->text[lexer->current];
+                consume(lexer);
+                this_or_that(lexer, &token, '=', TOKEN_NOT, TOKEN_NOTEQ);
+                break;
+            case '<':
+                token.start = &lexer->text[lexer->current];
+                consume(lexer);
+                this_or_that(lexer, &token, '=', TOKEN_LESS, TOKEN_LESSEQ);
+                break;
+            case '>':
+                token.start = &lexer->text[lexer->current];
+                consume(lexer);
+                this_or_that(lexer, &token, '=', TOKEN_GREATER, TOKEN_GREATEREQ);
+                break;
             case 'a':
                 token = match_identifier(lexer, "ans", 3, TOKEN_ANS);
                 break;
@@ -233,12 +233,12 @@ static Token scan_token(Lexer *lexer)
             case 'l':
                 token = match_identifier(lexer, "let", 3, TOKEN_LET);
                 break;
-			case 't':
-				token = match_identifier(lexer, "true", 4, TOKEN_TRUE);
-				break;
-			case 'f':
-				token = match_identifier(lexer, "false", 5, TOKEN_FALSE);
-				break;
+            case 't':
+                token = match_identifier(lexer, "true", 4, TOKEN_TRUE);
+                break;
+            case 'f':
+                token = match_identifier(lexer, "false", 5, TOKEN_FALSE);
+                break;
             default:
                 if (isalpha(c)) {
                     token = match_identifier(lexer, "", 0, TOKEN_IDENTIFIER);
@@ -272,7 +272,7 @@ void print_tokenlist(TokenList *list)
 {
     char* token_names[] = {
         "NUM", 
-		"STRING",
+        "STRING",
         "PLUS",
         "MINUS",
         "STAR",
@@ -287,17 +287,17 @@ void print_tokenlist(TokenList *list)
         "IDENTIFIER",
         "LET",
         "EXIT",
-		"OR",
-		"AND",
-		"EQEQ",
-		"NOT",
-		"NOTEQ",
-		"LESS",
-		"LESSEQ",
-		"GREATER",
-		"GREATEREQ",
-		"TRUE",
-		"FALSE",
+        "OR",
+        "AND",
+        "EQEQ",
+        "NOT",
+        "NOTEQ",
+        "LESS",
+        "LESSEQ",
+        "GREATER",
+        "GREATEREQ",
+        "TRUE",
+        "FALSE",
         "END",
         "ERROR",
     };

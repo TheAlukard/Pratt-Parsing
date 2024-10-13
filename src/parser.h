@@ -7,10 +7,10 @@
 
 typedef enum {
     PREC_NONE,
-	PREC_OR,
-	PREC_AND,
-	PREC_EQUALITY,
-	PREC_COMP,
+    PREC_OR,
+    PREC_AND,
+    PREC_EQUALITY,
+    PREC_COMP,
     PREC_ADSUB,
     PREC_MULDIV,
     PREC_POW,
@@ -22,7 +22,7 @@ typedef struct {
     int current;
     Value ans;
     Map map;
-	Arena arena;
+    Arena arena;
 } Parser;
 
 typedef Value (*ParseFn)(Parser *parser);
