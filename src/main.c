@@ -39,5 +39,6 @@ int main(void)
 		print_value(result);
     }
 
+	parser_destroy(&parser);
 	list_free(&list);
 }

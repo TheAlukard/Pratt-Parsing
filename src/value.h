@@ -2,6 +2,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include "arena.h"
 
 typedef enum {
 	VALUE_NUM,
@@ -32,7 +33,9 @@ typedef struct {
 #define VAL_BOOL(val) ((Value){.type = VALUE_BOOL, .as = {.bol = (val)}})
 
 String string_create(const char *text, size_t len);
+void string_destroy(String *string);
+String string_create_arena(Arena *arena, const char *text, size_t len);
 bool string_compare(String* one, String *two);
-String string_add(String *one, String *two);
+String string_add(Arena *arena, String *one, String *two);
 void value_to_str(char *buffer, Value *value);
 char* value_type_to_str(ValueType type);

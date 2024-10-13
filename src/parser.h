@@ -3,6 +3,7 @@
 #include "lexer.h"
 #include "map.h"
 #include "value.h"
+#include "arena.h"
 
 typedef enum {
     PREC_NONE,
@@ -21,6 +22,7 @@ typedef struct {
     int current;
     Value ans;
     Map map;
+	Arena arena;
 } Parser;
 
 typedef Value (*ParseFn)(Parser *parser);
@@ -32,6 +34,7 @@ typedef struct {
 } ParseRule;
 
 Parser parser_create();
+void parser_destroy(Parser *parser);
 void parser_reset(Parser *parser, TokenList *list);
 Value expression(Parser *parser, precedence rbp);
 Value parse_expr(Parser *parser);

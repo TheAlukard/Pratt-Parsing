@@ -26,6 +26,16 @@ Map map_new()
     return map;
 }
 
+void map_delete(Map *map)
+{
+	free(map->items);
+	map->items = NULL;
+	map->capacity = 0;
+	map->count = 0;
+
+	return;
+}
+
 uint32_t map_get_hash(Map *map, KEY key)
 {
     return map->hash(key) % map->capacity;

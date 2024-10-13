@@ -31,6 +31,7 @@ typedef struct {
 #define DEFAULT_MAP_CAP 300 
 
 Map map_new(void);
+void map_delete(Map *map);
 bool map_set(Map *map, KEY key, VALUE value);
 VALUE map_get(Map *map, KEY key);
 uint32_t map_get_hash(Map *map, KEY key);

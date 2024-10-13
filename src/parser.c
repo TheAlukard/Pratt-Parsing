@@ -68,6 +68,7 @@ Parser parser_create()
     parser.current = 0;
     parser.ans = VAL_NUM(0);
     parser.map = map_new();
+	parser.arena = arena_init(1024);
     
     return parser;
 }
@@ -76,6 +77,13 @@ void parser_reset(Parser *parser, TokenList *list)
 {
     parser->current = 0;
     parser->tokens = list;
+}
+
+void parser_destroy(Parser *parser)
+{
+	parser->current = 0;
+	arena_deinit(&parser->arena);
+	map_delete(&parser->map);
 }
 
 Token prev(Parser *parser)
@@ -106,7 +114,7 @@ Token expect(Parser *parser, TokenType expected)
     }
 }
 
-Value do_operation(Value left, Value right, Token oper)
+Value do_operation(Parser *parser, Value left, Value right, Token oper)
 {
 	if (left.type != right.type) {
 		char buffer1[100];
@@ -134,7 +142,7 @@ Value do_operation(Value left, Value right, Token oper)
 			switch (left.type) {
 				case VALUE_BOOL: invalid_op(); break;
 				case VALUE_NUM: result = VAL_NUM(AS_NUM(left) + AS_NUM(right)); break;
-				case VALUE_STR: result = VAL_STR(string_add(&AS_STR(left), &AS_STR(right))); break;
+				case VALUE_STR: result = VAL_STR(string_add(&parser->arena, &AS_STR(left), &AS_STR(right))); break;
 			}
 			break;
 		case TOKEN_MINUS: 
@@ -207,7 +215,7 @@ Value expression(Parser *parser, precedence rbp)
     while ((int)rbp < get_rule(peek(parser))->lbp) {
         token = consume(parser);
         Value right = get_rule(token)->infix(parser); 
-		left = do_operation(left, right, token);
+		left = do_operation(parser, left, right, token);
     }
 
     return left;
@@ -414,6 +422,10 @@ Value declare(Parser *parser)
     expect(parser, TOKEN_EQUAL); 
     Value result = expression(parser, PREC_NONE);
 
+	if (result.type == VALUE_STR) {
+		result = VAL_STR(string_create(AS_STR(result).data, AS_STR(result).len));
+	}
+
     if (!map_has(&parser->map, ident)) {
         char *name = (char*)malloc(sizeof(char) * ident.len);
         Token key = {
@@ -425,6 +437,10 @@ Value declare(Parser *parser)
         map_set(&parser->map, key, result);
     }
     else {
+		Value val = map_get(&parser->map, ident);
+		if (val.type == VALUE_STR) {
+			string_destroy(&AS_STR(val));
+		}
         map_set(&parser->map, ident, result);
     }
 
@@ -466,7 +482,7 @@ Value number(Parser *parser)
 Value string(Parser *parser)
 {
 	Token token = prev(parser);
-	String str = string_create(token.start, token.len);
+	String str = string_create_arena(&parser->arena, token.start, token.len);
 
 	return VAL_STR(str);
 }
