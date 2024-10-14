@@ -1,6 +1,5 @@
 #include "lexer.h"
 #include "string.h"
-#include <ctype.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
@@ -25,9 +24,33 @@ static char consume(Lexer *lexer)
     return lexer->text[lexer->current++];
 }
 
+static bool is_space(char c)
+{
+    return c == ' '  ||
+           c == '\n' ||
+           c == '\t' ||
+           c == '\r';
+}
+
+static bool is_alpha(char c)
+{
+    return (c >= 'a' && c <= 'z') ||
+           (c >= 'A' && c <= 'Z');
+}
+
+static bool is_digit(char c)
+{
+    return c >= '0' && c <= '9';
+}
+
+static bool is_alnum(char c)
+{
+    return is_alpha(c) || is_digit(c);
+}
+
 static void trim_left(Lexer *lexer)
 {
-    while (isspace(peek(lexer))) {
+    while (is_space(peek(lexer))) {
         consume(lexer);
     }
 }
@@ -38,7 +61,7 @@ static Token match_identifier(Lexer *lexer, const char *text, int len, TokenType
 
     Token token = {0};
 
-    while (isalnum(peek(lexer))) {
+    while (is_alnum(peek(lexer))) {
         consume(lexer);
     }
 
@@ -115,15 +138,15 @@ static Token scan_token(Lexer *lexer)
     char c = peek(lexer);
     Token token;
 
-    if (isdigit(c)) {
+    if (is_digit(c)) {
         token.type = TOKEN_NUM;
         token.start = &lexer->text[lexer->current];
-        while (isdigit(peek(lexer))) {
+        while (is_digit(peek(lexer))) {
             consume(lexer);
         }
         if (peek(lexer) == '.') {
             consume(lexer);
-            while (isdigit(peek(lexer))) {
+            while (is_digit(peek(lexer))) {
                 consume(lexer);
             }
         }
@@ -240,7 +263,7 @@ static Token scan_token(Lexer *lexer)
                 token = match_identifier(lexer, "false", 5, TOKEN_FALSE);
                 break;
             default:
-                if (isalpha(c)) {
+                if (is_alpha(c)) {
                     token = match_identifier(lexer, "", 0, TOKEN_IDENTIFIER);
                 }
                 else {
