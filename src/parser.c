@@ -263,9 +263,9 @@ Value binary(Parser *parser)
     return result;
 }
 
-bool expected_str(const char *str, const char *expected, int len)
+bool expected_str(const char *str, const char *expected, size_t len)
 {
-    return memcmp(str, expected, sizeof(char) * len) == 0;
+    return strlen(expected) != len ? false : memcmp(str, expected, sizeof(char) * len) == 0;
 }
 
 typedef enum {
@@ -291,6 +291,7 @@ typedef enum {
     ROUND,
     SQRT,
     PI,
+    MATHFUNC_COUNT,
 } MathFunc;
 
 Value math_func(Parser *parser, MathFunc func)
@@ -367,7 +368,7 @@ Value math_func(Parser *parser, MathFunc func)
         case PI:
             return VAL_NUM(3.14159265358979323846f);
         default:
-            return VAL_NUM(0);
+            return VAL_NUM(0); // unreachable
     }
 }
 
@@ -379,7 +380,7 @@ Value identifier(Parser *parser)
     // tan
     //
 
-    const char* funcs[] = {
+    static const char* funcs[MATHFUNC_COUNT] = {
         "sin",
         "cos",
         "tan",
@@ -457,7 +458,7 @@ Value get_var(Parser *parser)
             if (parser->map.items[i].valid) {
                 Token key = parser->map.items[i].key;
                 Value value = parser->map.items[i].value;
-                char buffer[100];
+                static char buffer[100];
                 value_to_str(buffer, &value);
                 printf("Key: %.*s, Value: %s\n", key.len, key.start, buffer);
             }
@@ -472,7 +473,7 @@ Value get_var(Parser *parser)
 Value number(Parser *parser)
 {
     Token num = prev(parser);
-    char temp[100];
+    static char temp[100];
     sprintf(temp, "%.*s", num.len, num.start);
     Value result = VAL_NUM(strtod(temp, NULL));
 

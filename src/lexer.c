@@ -293,7 +293,7 @@ void tokenize(const char *text, TokenList *output)
 
 void print_tokenlist(TokenList *list)
 {
-    char* token_names[] = {
+    static const char* token_names[TOKEN_COUNT] = {
         "NUM", 
         "STRING",
         "PLUS",
