@@ -18,7 +18,7 @@ typedef struct {
 typedef struct {
     ValueType type;
     union {
-        double num;
+        long double num;
         String str;
         bool   bol;
     } as;

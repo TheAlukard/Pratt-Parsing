@@ -10,7 +10,7 @@ void print_value(Value value)
 {
     switch (value.type) {
         case VALUE_NUM:
-            printf("> %0.15lf\n", AS_NUM(value));
+            printf("> %0.25Lf\n", AS_NUM(value));
             break;
         case VALUE_STR:
             printf("> %.*s\n", (int)AS_STR(value).len, AS_STR(value).data);

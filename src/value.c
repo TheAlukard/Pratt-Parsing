@@ -35,7 +35,7 @@ void value_to_str(char *buffer, Value *value)
 {
     switch (value->type) {
         case VALUE_NUM:
-            sprintf(buffer, "%0.15lf", AS_NUM(*value));
+            sprintf(buffer, "%0.15Lf", AS_NUM(*value));
             break;
         case VALUE_STR:
             sprintf(buffer, "%.*s", (int)AS_STR(*value).len, AS_STR(*value).data);

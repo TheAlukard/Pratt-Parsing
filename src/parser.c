@@ -301,74 +301,74 @@ Value math_func(Parser *parser, MathFunc func)
     switch (func) {
         case SIN:
             expect(parser, TOKEN_LEFT_PAREN);
-            return VAL_NUM(sin(AS_NUM(grouping(parser)))); 
+            return VAL_NUM(sinl(AS_NUM(grouping(parser)))); 
         case COS:
             expect(parser, TOKEN_LEFT_PAREN);
-            return VAL_NUM(cos(AS_NUM(grouping(parser))));
+            return VAL_NUM(cosl(AS_NUM(grouping(parser))));
         case TAN:
             expect(parser, TOKEN_LEFT_PAREN);
-            return VAL_NUM(tan(AS_NUM(grouping(parser))));
+            return VAL_NUM(tanl(AS_NUM(grouping(parser))));
         case ASIN:
             expect(parser, TOKEN_LEFT_PAREN);
-            return VAL_NUM(asin(AS_NUM(grouping(parser))));
+            return VAL_NUM(asinl(AS_NUM(grouping(parser))));
         case ACOS:
             expect(parser, TOKEN_LEFT_PAREN);
-            return VAL_NUM(acos(AS_NUM(grouping(parser))));
+            return VAL_NUM(acosl(AS_NUM(grouping(parser))));
         case ATAN:
             expect(parser, TOKEN_LEFT_PAREN);
-            return VAL_NUM(atan(AS_NUM(grouping(parser))));
+            return VAL_NUM(atanl(AS_NUM(grouping(parser))));
         case ATAN2:
             expect(parser, TOKEN_LEFT_PAREN);
             r1 = expression(parser, PREC_NONE);
             expect(parser, TOKEN_COMMA);
             r2 = grouping(parser);
-            return VAL_NUM(atan2(AS_NUM(r1), AS_NUM(r2)));
+            return VAL_NUM(atan2l(AS_NUM(r1), AS_NUM(r2)));
         case SINH:
             expect(parser, TOKEN_LEFT_PAREN);
-            return VAL_NUM(sinh(AS_NUM(grouping(parser))));
+            return VAL_NUM(sinhl(AS_NUM(grouping(parser))));
         case COSH:
             expect(parser, TOKEN_LEFT_PAREN);
-            return VAL_NUM(cosh(AS_NUM(grouping(parser))));
+            return VAL_NUM(coshl(AS_NUM(grouping(parser))));
         case TANH:
             expect(parser, TOKEN_LEFT_PAREN);
-            return VAL_NUM(tanh(AS_NUM(grouping(parser))));
+            return VAL_NUM(tanhl(AS_NUM(grouping(parser))));
         case ASINH:
             expect(parser, TOKEN_LEFT_PAREN);
-            return VAL_NUM(asinh(AS_NUM(grouping(parser))));
+            return VAL_NUM(asinhl(AS_NUM(grouping(parser))));
         case ACOSH:
             expect(parser, TOKEN_LEFT_PAREN);
-            return VAL_NUM(acosh(AS_NUM(grouping(parser))));
+            return VAL_NUM(acoshl(AS_NUM(grouping(parser))));
         case ATANH:
             expect(parser, TOKEN_LEFT_PAREN);
-            return VAL_NUM(atanh(AS_NUM(grouping(parser))));
+            return VAL_NUM(atanhl(AS_NUM(grouping(parser))));
         case EXP:
             expect(parser, TOKEN_LEFT_PAREN);
-            return VAL_NUM(exp(AS_NUM(grouping(parser))));
+            return VAL_NUM(expl(AS_NUM(grouping(parser))));
         case LOG:
             expect(parser, TOKEN_LEFT_PAREN);
-            return VAL_NUM(log(AS_NUM(grouping(parser))));
+            return VAL_NUM(logl(AS_NUM(grouping(parser))));
         case LOG10:
             expect(parser, TOKEN_LEFT_PAREN);
-            return VAL_NUM(log10(AS_NUM(grouping(parser))));
+            return VAL_NUM(log10l(AS_NUM(grouping(parser))));
         case LOG2:
             expect(parser, TOKEN_LEFT_PAREN);
-            return VAL_NUM(log2(AS_NUM(grouping(parser))));
+            return VAL_NUM(log2l(AS_NUM(grouping(parser))));
         case CEIL:
             expect(parser, TOKEN_LEFT_PAREN);
-            return VAL_NUM(ceil(AS_NUM(grouping(parser))));
+            return VAL_NUM(ceill(AS_NUM(grouping(parser))));
         case FLOOR:
             expect(parser, TOKEN_LEFT_PAREN);
-            return VAL_NUM(floor(AS_NUM(grouping(parser))));
+            return VAL_NUM(floorl(AS_NUM(grouping(parser))));
         case ROUND:
             expect(parser, TOKEN_LEFT_PAREN);
-            return VAL_NUM(round(AS_NUM(grouping(parser))));
+            return VAL_NUM(roundl(AS_NUM(grouping(parser))));
         case SQRT:
             expect(parser, TOKEN_LEFT_PAREN);
-            return VAL_NUM(sqrt(AS_NUM(grouping(parser))));
+            return VAL_NUM(sqrtl(AS_NUM(grouping(parser))));
         case PI:
-            return VAL_NUM(3.14159265358979323846f);
+            return VAL_NUM(3.14159265358979323846264338327950288419716939937510f);
         default:
-            return VAL_NUM(0); // unreachable
+            return VAL_NUM(0.0f); // unreachable
     }
 }
 
@@ -475,7 +475,7 @@ Value number(Parser *parser)
     Token num = prev(parser);
     static char temp[100];
     sprintf(temp, "%.*s", num.len, num.start);
-    Value result = VAL_NUM(strtod(temp, NULL));
+    Value result = VAL_NUM(strtold(temp, NULL));
 
     return result;
 }
