@@ -11,6 +11,8 @@ make
 
 # Usage
 
+https://github.com/user-attachments/assets/8a2dab6c-063b-4e74-802a-79d1a0f86c0b
+
 Basic mathematical operations:
 
 ```
