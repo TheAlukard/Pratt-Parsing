@@ -65,4 +65,4 @@ Boolean expressions:
 
 # Example
 
-https://github.com/user-attachments/assets/8a2dab6c-063b-4e74-802a-79d1a0f86c0b
+https://github.com/user-attachments/assets/9974bb12-d39f-468d-bf72-c44aee56e689
