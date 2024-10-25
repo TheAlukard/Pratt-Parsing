@@ -11,8 +11,6 @@ make
 
 # Usage
 
-https://github.com/user-attachments/assets/8a2dab6c-063b-4e74-802a-79d1a0f86c0b
-
 Basic mathematical operations:
 
 ```
@@ -64,3 +62,7 @@ Boolean expressions:
 > 1 <= 1
 > (2 >= 90 && false) || (33 < 890 && true != false)
 ```
+
+# Example
+
+https://github.com/user-attachments/assets/8a2dab6c-063b-4e74-802a-79d1a0f86c0b
