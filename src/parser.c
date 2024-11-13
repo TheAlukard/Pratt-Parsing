@@ -291,6 +291,7 @@ typedef enum {
     ROUND,
     SQRT,
     PI,
+    EULER,
     MATHFUNC_COUNT,
 } MathFunc;
 
@@ -367,6 +368,8 @@ Value math_func(Parser *parser, MathFunc func)
             return VAL_NUM(sqrtl(AS_NUM(grouping(parser))));
         case PI:
             return VAL_NUM(3.14159265358979323846264338327950288419716939937510f);
+        case EULER:
+            return VAL_NUM(2.71828182845904523536028747135266249775724709369995f);
         default:
             return VAL_NUM(0.0f); // unreachable
     }
@@ -403,6 +406,7 @@ Value identifier(Parser *parser)
         "round",
         "sqrt",
         "pi",
+        "e",
     };
 
     Token ident = prev(parser);
