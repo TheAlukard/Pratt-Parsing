@@ -2,13 +2,13 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-uint32_t hash(Token token)
+uint32_t hash(String key)
 {
     uint32_t hash = 5381;
     int c = 1;
 
-    for (int i = 0; i < token.len; i++) {
-        c = token.start[i];
+    for (size_t i = 0; i < key.len; i++) {
+        c = key.data[i];
         hash = ((hash << 5) + hash) + c;
     }
 
@@ -36,12 +36,12 @@ void map_delete(Map *map)
     return;
 }
 
-uint32_t map_get_hash(Map *map, KEY key)
+uint32_t map_get_hash(Map *map, MAP_KEY key)
 {
     return map->hash(key) % map->capacity;
 }
 
-uint32_t map_get_i(Map *map, KEY key)
+uint32_t map_get_i(Map *map, MAP_KEY key)
 {
     uint32_t hash_value = map_get_hash(map, key);
 
@@ -56,7 +56,7 @@ uint32_t map_get_i(Map *map, KEY key)
     return 0;
 }
 
-bool map_set(Map *map, KEY key, VALUE value)
+bool map_set(Map *map, MAP_KEY key, MAP_VALUE value)
 {
     uint32_t hash_value = map_get_hash(map, key);
     
@@ -81,7 +81,7 @@ bool map_set(Map *map, KEY key, VALUE value)
     return false;
 }
 
-VALUE map_get(Map *map, KEY key)
+MAP_VALUE map_get(Map *map, MAP_KEY key)
 {
     uint32_t hash_value = map_get_hash(map, key);
     
@@ -93,10 +93,10 @@ VALUE map_get(Map *map, KEY key)
         }
     }
     
-    return (VALUE){0};
+    return (MAP_VALUE){0};
 }
 
-bool map_has(Map *map, KEY key)
+bool map_has(Map *map, MAP_KEY key)
 {
     uint32_t hash_value = map_get_hash(map, key);
     
@@ -109,4 +109,19 @@ bool map_has(Map *map, KEY key)
     }
     
     return false;
+}
+
+MAP_VALUE* map_array(Map *map)
+{
+    if (map->count <= 0 || map->count > map->capacity) return NULL;
+
+    MAP_VALUE *array = malloc(sizeof(MAP_VALUE) * map->count);
+
+    for (size_t i = 0, j = 0; i < map->capacity && j < map->count; i++) {
+        if (map->items[i].valid) {
+            array[j++] = map->items[i].value;
+        }
+    }
+
+    return array;
 }

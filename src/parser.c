@@ -1,7 +1,9 @@
 #include "parser.h"
+#include "arena.h"
 #include "lexer.h"
 #include "value.h"
 #include <math.h> 
+#include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -386,6 +388,81 @@ Value math_func(Parser *parser, MathFunc func)
     }
 }
 
+bool is_name(FILE *f, String name)
+{
+    if (f == NULL || feof(f)) return false;
+
+    char c = fgetc(f);
+    size_t i = 0;
+
+    while (i < name.len && c != '\0' && !feof(f)) {
+        if (c != name.data[i++]) return false;
+        c = fgetc(f);
+    }
+
+    if (i != name.len || c != '\0') return false;
+
+    return true;
+}
+
+bool export_variable(Parser *parser, FILE *f, String variable_name)
+{
+    if (f == NULL) return false;
+
+    if (!map_has(&parser->map, variable_name)) return false;
+
+    Value value = map_get(&parser->map, variable_name); 
+
+    if (fwrite(variable_name.data, sizeof(char), variable_name.len, f) != variable_name.len) return false;
+    if (fputc('\0', f) == EOF) return false;
+
+    if (fwrite(&value.type, sizeof(ValueType), 1, f) != 1) return false;
+    switch (value.type) {
+        case VALUE_NUM:
+            if (fwrite(&AS_NUM(value), sizeof(AS_NUM(value)), 1, f) != 1) return false;
+            break;
+        case VALUE_BOOL:
+            if (fwrite(&AS_BOOL(value), sizeof(AS_BOOL(value)), 1, f) != 1) return false;
+            break;
+        case VALUE_STR:
+            if (fwrite(&AS_STR(value).len, sizeof(AS_STR(value).len), 1, f) != 1) return false;
+            if (fwrite(AS_STR(value).data, sizeof(char), AS_STR(value).len, f) != AS_STR(value).len) return false;
+            break;
+        default:
+            return false;
+    }
+
+    return true;
+}
+
+bool import_variable(Parser *parser, FILE *f, String variable_name, Value *value)
+{
+    if (f == NULL || feof(f)) return false;
+
+    if (!is_name(f, variable_name)) return false;
+
+    if (fread(&value->type, sizeof(ValueType), 1, f) != 1) return false;
+    switch (value->type) {
+        case VALUE_NUM:
+            if (fread(&AS_NUM(*value), sizeof(AS_NUM(*value)), 1, f) != 1) return false;
+            break;
+        case VALUE_BOOL:
+            if (fread(&AS_BOOL(*value), sizeof(AS_BOOL(*value)), 1, f) != 1) return false;
+            break;
+        case VALUE_STR:
+            if (fread(&AS_STR(*value).len, sizeof(AS_STR(*value).len), 1, f) != 1) return false;
+            char *buffer = arena_alloc(&parser->arena, sizeof(char) * (AS_STR(*value).len + 1));
+            if (fread(buffer, sizeof(char), AS_STR(*value).len, f) != AS_STR(*value).len) return false;
+            buffer[AS_STR(*value).len] = '\0';
+            AS_STR(*value).data = buffer;
+            break;
+        default:
+            return false;
+    }
+
+    return true;
+}
+
 Value identifier(Parser *parser)
 {
     // math funcs 
@@ -422,6 +499,48 @@ Value identifier(Parser *parser)
 
     Token ident = prev(parser);
 
+    if (expected_str(ident.start, "export", ident.len)) {
+        expect(parser, TOKEN_LEFT_PAREN);
+        String var_name = AS_STR(expression(parser, PREC_NONE));
+        expect(parser, TOKEN_COMMA);
+        String var_path = AS_STR(grouping(parser));
+        FILE *file = fopen(var_path.data, "wb");
+        if (file == NULL) {
+            fprintf(stderr, "Couldn't write to file '%s'\n", var_path.data);
+            parser->error = true;
+            return VAL_BOOL(false);
+        }
+        if (!export_variable(parser, file, var_name)) {
+            fclose(file);
+            fprintf(stderr, "Failed to export variable '%s'\n", var_name.data);
+            parser->error = true;
+            return VAL_BOOL(false);
+        }
+        fclose(file);
+        return VAL_BOOL(true);
+    }
+    else if (expected_str(ident.start, "import", ident.len)) {
+        expect(parser, TOKEN_LEFT_PAREN);
+        String var_name = AS_STR(expression(parser, PREC_NONE));
+        expect(parser, TOKEN_COMMA);
+        String var_path = AS_STR(grouping(parser));
+        FILE *file = fopen(var_path.data, "rb");
+        if (file == NULL) {
+            fprintf(stderr, "Couldn't read from file '%s'\n", var_path.data);
+            parser->error = true;
+            return VAL_BOOL(false);
+        }
+        Value var = {0};
+        if (!import_variable(parser, file, var_name, &var)) {
+            fclose(file);
+            fprintf(stderr, "Failed to import variable '%s'\n", var_name.data);
+            parser->error = true;
+            return VAL_BOOL(false);
+        }
+        fclose(file);
+        return var;
+    }
+
     for (size_t i = 0; i < array_len(funcs); i++) {
         if (expected_str(ident.start, funcs[i], ident.len)) {
             return math_func(parser, (MathFunc)i);
@@ -444,22 +563,18 @@ Value declare(Parser *parser)
         result = VAL_STR(string_create(AS_STR(result).data, AS_STR(result).len));
     }
 
-    if (!map_has(&parser->map, ident)) {
-        char *name = (char*)malloc(sizeof(char) * ident.len);
-        Token key = {
-            .start = name,
-            .len = ident.len,
-            .type = ident.type,
-        };
-        memcpy(name, ident.start, sizeof(char) * ident.len);
+    String str = {.data = (char*)ident.start, .len = ident.len};
+
+    if (!map_has(&parser->map, str)) {
+        String key = string_create(ident.start, ident.len);
         map_set(&parser->map, key, result);
     }
     else {
-        Value val = map_get(&parser->map, ident);
+        Value val = map_get(&parser->map, str);
         if (val.type == VALUE_STR) {
             string_destroy(&AS_STR(val));
         }
-        map_set(&parser->map, ident, result);
+        map_set(&parser->map, str, result);
     }
 
     return result;
@@ -468,22 +583,22 @@ Value declare(Parser *parser)
 Value get_var(Parser *parser)
 {
     Token ident = expect(parser, TOKEN_IDENTIFIER);
+    String str = {.data = (char*)ident.start, .len = ident.len};
     
-    if (!map_has(&parser->map, ident)) {
+    if (!map_has(&parser->map, str)) {
         fprintf(stderr, "Error: Variable '%.*s' doesn't exist\n", ident.len, ident.start);
         parser->error = true;
         for (size_t i = 0; i < parser->map.capacity; i++) {
             if (parser->map.items[i].valid) {
-                Token key = parser->map.items[i].key;
+                String key = parser->map.items[i].key;
                 Value value = parser->map.items[i].value;
                 static char buffer[100];
                 value_to_str(buffer, &value);
-                printf("Key: %.*s, Value: %s\n", key.len, key.start, buffer);
+                printf("Key: %.*s, Value: %s\n", (int)key.len, key.data, buffer);
             }
         }
-        parser->error = true;
     }
-    Value result = map_get(&parser->map, ident);
+    Value result = map_get(&parser->map, str);
 
     return result;
 }
