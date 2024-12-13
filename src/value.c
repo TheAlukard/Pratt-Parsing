@@ -8,8 +8,9 @@ String string_create(const char *text, size_t len)
 {
     String str;
     str.len = len;
-    str.data = malloc(sizeof(char) * str.len);
+    str.data = malloc(sizeof(char) * (str.len + 1));
     memcpy(str.data, text, sizeof(char) * len);
+    str.data[str.len] = '\0';
 
     return str;
 }
@@ -25,8 +26,9 @@ String string_create_arena(Arena *arena, const char *text, size_t len)
 {
     String str;
     str.len = len;
-    str.data = arena_alloc(arena, sizeof(char) * str.len);
+    str.data = arena_alloc(arena, sizeof(char) * (str.len + 1));
     memcpy(str.data, text, sizeof(char) * len);
+    str.data[str.len] = '\0';
 
     return str;
 }
