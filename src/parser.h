@@ -4,6 +4,7 @@
 #include "map.h"
 #include "value.h"
 #include "arena.h"
+#include <stdbool.h>
 
 typedef enum {
     PREC_NONE,
@@ -23,6 +24,7 @@ typedef struct {
     Value ans;
     Map map;
     Arena arena;
+    bool error;
 } Parser;
 
 typedef Value (*ParseFn)(Parser *parser);

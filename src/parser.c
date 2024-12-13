@@ -54,7 +54,7 @@ ParseRule rules[TOKEN_COUNT] = {
 Value exit_prog(Parser *parser)
 {
     (void)(parser);
-    exit(0);
+    exit(parser->error);
 }
 
 ParseRule* get_rule(Token token)
@@ -66,6 +66,7 @@ Parser parser_create()
 {
     Parser parser;
     parser.current = 0;
+    parser.error = false;
     parser.ans = VAL_NUM(0);
     parser.map = map_new();
     parser.arena = arena_init(1024);
@@ -75,6 +76,7 @@ Parser parser_create()
 
 void parser_reset(Parser *parser, TokenList *list)
 {
+    parser->error = false;
     parser->current = 0;
     parser->tokens = list;
 }
@@ -109,8 +111,9 @@ Token expect(Parser *parser, TokenType expected)
         return consume(parser);
     }
     else {
-        fprintf(stderr, "Error: Invalid Token '%.*s'", token.len, token.start);
-        exit(1);
+        fprintf(stderr, "Error: Invalid Token '%.*s'\n", token.len, token.start);
+        parser->error = true;
+        return (Token){.type = TOKEN_ERROR};
     }
 }
 
@@ -125,7 +128,7 @@ Value do_operation(Parser *parser, Value left, Value right, Token oper)
         fprintf(stderr, "Error: Value: %s of type: %s has a different type than Value: %s of type: %s\n",
                 buffer1, value_type_to_str(left.type), buffer2, value_type_to_str(right.type));
 
-        exit(1);
+        parser->error = true;
     }
 
     Value result;
@@ -134,7 +137,7 @@ Value do_operation(Parser *parser, Value left, Value right, Token oper)
         do { \
             fprintf(stderr, "Error: Can't perform this operation: %.*s on a value of this type: %s\n",\
                     oper.len, oper.start, value_type_to_str(left.type));\
-            exit(1);\
+            parser->error = true;\
         } while (0)
 
     switch (oper.type) {
@@ -209,10 +212,12 @@ Value do_operation(Parser *parser, Value left, Value right, Token oper)
 
 Value expression(Parser *parser, precedence rbp)
 {
+    if (parser->error) return VAL_NUM(0.0);
     Token token = consume(parser);
     Value left = get_rule(token)->prefix(parser);
 
     while ((int)rbp < get_rule(peek(parser))->lbp) {
+        if (parser->error) return VAL_NUM(0.0);
         token = consume(parser);
         Value right = get_rule(token)->infix(parser); 
         left = do_operation(parser, left, right, token);
@@ -223,6 +228,12 @@ Value expression(Parser *parser, precedence rbp)
 
 Value parse_expr(Parser *parser)
 {
+    if (parser->tokens->count <= 0 ||
+        parser->tokens->items[0].type == TOKEN_END ||
+        parser->tokens->items[0].type == TOKEN_ERROR) {
+        parser->error = true;
+        return VAL_NUM(0.0);
+    }
     Value result = expression(parser, PREC_NONE);
     parser->ans = result;
 
@@ -417,8 +428,10 @@ Value identifier(Parser *parser)
         }
     }
 
-    fprintf(stderr, "Error: Unkown identifier '%.*s'", ident.len, ident.start);
-    exit(1);
+    fprintf(stderr, "Error: Unkown identifier '%.*s'\n", ident.len, ident.start);
+    parser->error = true;
+
+    return VAL_BOOL(false);
 }
 
 Value declare(Parser *parser)
@@ -458,6 +471,7 @@ Value get_var(Parser *parser)
     
     if (!map_has(&parser->map, ident)) {
         fprintf(stderr, "Error: Variable '%.*s' doesn't exist\n", ident.len, ident.start);
+        parser->error = true;
         for (size_t i = 0; i < parser->map.capacity; i++) {
             if (parser->map.items[i].valid) {
                 Token key = parser->map.items[i].key;
@@ -467,7 +481,7 @@ Value get_var(Parser *parser)
                 printf("Key: %.*s, Value: %s\n", key.len, key.start, buffer);
             }
         }
-        exit(1);
+        parser->error = true;
     }
     Value result = map_get(&parser->map, ident);
 

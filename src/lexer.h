@@ -1,6 +1,7 @@
 #pragma once
 
 #include "list.h"
+#include <stdbool.h>
 
 typedef enum {
     TOKEN_NUM, 
@@ -44,11 +45,12 @@ typedef struct {
 typedef struct {
     const char *text;
     int current;
+    bool error;
 } Lexer;
 
 LIST_DEF(TokenList, Token);
 
 Lexer lexer_new(const char *text);
-void tokenize(const char *text, TokenList *output);
+bool tokenize(const char *text, TokenList *output);
 void print_tokenlist(TokenList *list);
 

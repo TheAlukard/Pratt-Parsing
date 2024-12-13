@@ -9,6 +9,7 @@ Lexer lexer_new(const char *text)
     Lexer lexer = {
         .text = text,
         .current = 0,
+        .error = false,
     };
 
     return lexer;
@@ -89,6 +90,7 @@ static void match(Lexer *lexer, Token *token, char expected, TokenType type)
     }
     else {
         fprintf(stderr, "Error: Unexpected Token\n");
+        lexer->error = true;
     }
 }
 
@@ -125,7 +127,7 @@ static Token parse_string_literal(Lexer *lexer)
 
     if (consume(lexer) != quote) {
         fprintf(stderr, "Error: Mismatching quotes.");
-        exit(1);
+        lexer->error = true;
     }
     
     return token;
@@ -278,17 +280,22 @@ static Token scan_token(Lexer *lexer)
     return token;
 }
 
-void tokenize(const char *text, TokenList *output)
+bool tokenize(const char *text, TokenList *output)
 {
+    if (text == NULL || strlen(text) <= 0) return false;
+
     Lexer lexer = lexer_new(text); 
     Token token = scan_token(&lexer);
 
     while (token.type != TOKEN_END && token.type != TOKEN_ERROR) {
+        if (lexer.error) return false;
         list_push(output, token);
         token = scan_token(&lexer);
     }
 
     list_push(output, token);
+
+    return !lexer.error;
 }
 
 void print_tokenlist(TokenList *list)

@@ -32,11 +32,17 @@ int main(void)
         printf("> ");
         fgets(buffer, sizeof(char) * buffer_len, stdin);
         list_clear(&list);
-        tokenize(buffer, &list);
-        /* print_tokenlist(&list); */
-        parser_reset(&parser, &list);
-        Value result = parse_expr(&parser);
-        print_value(result);
+        if (tokenize(buffer, &list)) {
+            // print_tokenlist(&list);
+            parser_reset(&parser, &list);
+            Value result = parse_expr(&parser);
+            if (parser.error) {
+                fprintf(stderr, "ERROR: Parsing Failed!\n");
+            }
+            else {
+                print_value(result);
+            }
+        }
     }
 
     parser_destroy(&parser);
