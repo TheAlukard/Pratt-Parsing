@@ -5,5 +5,10 @@ ifeq ($(OS),Windows_NT)
     CFLAGS += -D__USE_MINGW_ANSI_STDIO
 endif
 
+all: PrattParsing
+
 PrattParsing: $(SRC) 
 	gcc $(CFLAGS) -o PrattParsing $(SRC)
+
+debug: $(SRC)
+	gcc -g -Werror -Wall -Wextra -pedantic -lm -o PrattParsing $(SRC)
