@@ -62,7 +62,3 @@ Boolean expressions:
 > 1 <= 1
 > (2 >= 90 && false) || (33 < 890 && true != false)
 ```
-
-# Example
-
-https://github.com/user-attachments/assets/9974bb12-d39f-468d-bf72-c44aee56e689
