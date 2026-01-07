@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdbool.h>
-#include <math.h>
 #include "list.h"
 #include "lexer.h"
 #include "parser.h"

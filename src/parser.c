@@ -465,12 +465,6 @@ bool import_variable(Parser *parser, FILE *f, String variable_name, Value *value
 
 Value identifier(Parser *parser)
 {
-    // math funcs 
-    // sin
-    // cos
-    // tan
-    //
-
     static const char* funcs[MATHFUNC_COUNT] = {
         "sin",
         "cos",
