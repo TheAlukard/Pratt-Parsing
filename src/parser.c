@@ -1,6 +1,7 @@
 #include "parser.h"
 #include "arena.h"
 #include "lexer.h"
+#include "map.h"
 #include "value.h"
 #include <math.h> 
 #include <stdio.h>
@@ -502,22 +503,41 @@ Value identifier(Parser *parser)
 
     if (expected_str(ident.start, "export", ident.len)) {
         expect(parser, TOKEN_LEFT_PAREN);
-        String var_name = AS_STR(expression(parser, PREC_NONE, TOKEN_STRING));
-        if (parser->error) {
-            fprintf(stderr, "Couldn't export variable because of parsing error.\n");
+
+        if (expect(parser, TOKEN_DOLLAR).type == TOKEN_ERROR) {
+            fprintf(stderr, "Error: First argument should be a variable starting with '$'.\n");
             return VAL_BOOL(false);
         }
+
+        Token ident = expect(parser, TOKEN_IDENTIFIER);
+        if (ident.type == TOKEN_ERROR) {
+            fprintf(stderr, "Error: Invalid identifier.\n");
+            return VAL_BOOL(false);
+        }
+
+        String var_name = (String){.data = (char*)ident.start, .len = ident.len};
+
+        if (!map_has(&parser->map, var_name)) {
+            fprintf(stderr, "Error: variable '%.*s' doesn't exist.\n", (int)ident.len, ident.start);
+            return VAL_BOOL(false);
+        }
+
+        if (parser->error) {
+            fprintf(stderr, "Error: Couldn't export variable because of parsing error.\n");
+            return VAL_BOOL(false);
+        }
+
         expect(parser, TOKEN_COMMA);
         String var_path = AS_STR(grouping(parser));
         FILE *file = fopen(var_path.data, "wb");
         if (file == NULL) {
-            fprintf(stderr, "Couldn't write to file '%s'\n", var_path.data);
+            fprintf(stderr, "Error: Couldn't write to file '%s'\n", var_path.data);
             parser->error = true;
             return VAL_BOOL(false);
         }
         if (!export_variable(parser, file, var_name)) {
             fclose(file);
-            fprintf(stderr, "Failed to export variable '%s'\n", var_name.data);
+            fprintf(stderr, "Error: Failed to export variable '%s'\n", var_name.data);
             parser->error = true;
             return VAL_BOOL(false);
         }
