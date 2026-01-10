@@ -22,6 +22,7 @@ Value string(Parser *parser);
 Value boolean(Parser *parser);
 
 ParseRule rules[TOKEN_COUNT] = {
+    {NULL, NULL, PREC_NONE},
     {number, NULL, PREC_NONE},
     {string, NULL, PREC_NONE},
     {NULL, binary, PREC_ADSUB},
@@ -212,10 +213,15 @@ Value do_operation(Parser *parser, Value left, Value right, Token oper)
     return result;
 }
 
-Value expression(Parser *parser, precedence rbp)
+Value expression(Parser *parser, precedence rbp, TokenType expected_first_token)
 {
     if (parser->error) return VAL_NUM(0.0);
     Token token = consume(parser);
+    if (expected_first_token != TOKEN_NONE && token.type != expected_first_token) {
+        parser->error = true;
+        fprintf(stderr, "The first token wasn't as expected.\n");
+        return VAL_BOOL(false);
+    }
     Value left = get_rule(token)->prefix(parser);
 
     while ((int)rbp < get_rule(peek(parser))->lbp) {
@@ -236,7 +242,7 @@ Value parse_expr(Parser *parser)
         parser->error = true;
         return VAL_NUM(0.0);
     }
-    Value result = expression(parser, PREC_NONE);
+    Value result = expression(parser, PREC_NONE, TOKEN_NONE);
     parser->ans = result;
 
     return result;
@@ -249,7 +255,7 @@ Value ans(Parser *parser)
 
 Value grouping(Parser *parser)
 {
-    Value result = expression(parser, PREC_NONE);
+    Value result = expression(parser, PREC_NONE, TOKEN_NONE);
     expect(parser, TOKEN_RIGHT_PAREN);
 
     return result;
@@ -258,7 +264,7 @@ Value grouping(Parser *parser)
 Value unary(Parser *parser)
 {
     Token token = prev(parser);
-    Value result = expression(parser, PREC_UNARY);
+    Value result = expression(parser, PREC_UNARY, TOKEN_NONE);
 
     switch (token.type) {
         case TOKEN_NOT:   result = VAL_BOOL(!AS_BOOL(result));   break;
@@ -271,7 +277,7 @@ Value unary(Parser *parser)
 
 Value binary(Parser *parser)
 {
-    Value result = expression(parser, get_rule(prev(parser))->lbp);
+    Value result = expression(parser, get_rule(prev(parser))->lbp, TOKEN_NONE);
 
     return result;
 }
@@ -333,7 +339,7 @@ Value math_func(Parser *parser, MathFunc func)
             return VAL_NUM(atanl(AS_NUM(grouping(parser))));
         case ATAN2:
             expect(parser, TOKEN_LEFT_PAREN);
-            r1 = expression(parser, PREC_NONE);
+            r1 = expression(parser, PREC_NONE, TOKEN_NONE);
             expect(parser, TOKEN_COMMA);
             r2 = grouping(parser);
             return VAL_NUM(atan2l(AS_NUM(r1), AS_NUM(r2)));
@@ -409,6 +415,7 @@ bool export_variable(Parser *parser, FILE *f, String variable_name)
 {
     if (f == NULL) return false;
 
+    printf("var_len: %zu\n", variable_name.len);
     if (!map_has(&parser->map, variable_name)) return false;
 
     Value value = map_get(&parser->map, variable_name); 
@@ -495,7 +502,11 @@ Value identifier(Parser *parser)
 
     if (expected_str(ident.start, "export", ident.len)) {
         expect(parser, TOKEN_LEFT_PAREN);
-        String var_name = AS_STR(expression(parser, PREC_NONE));
+        String var_name = AS_STR(expression(parser, PREC_NONE, TOKEN_STRING));
+        if (parser->error) {
+            fprintf(stderr, "Couldn't export variable because of parsing error.\n");
+            return VAL_BOOL(false);
+        }
         expect(parser, TOKEN_COMMA);
         String var_path = AS_STR(grouping(parser));
         FILE *file = fopen(var_path.data, "wb");
@@ -515,7 +526,7 @@ Value identifier(Parser *parser)
     }
     else if (expected_str(ident.start, "import", ident.len)) {
         expect(parser, TOKEN_LEFT_PAREN);
-        String var_name = AS_STR(expression(parser, PREC_NONE));
+        String var_name = AS_STR(expression(parser, PREC_NONE, TOKEN_STRING));
         expect(parser, TOKEN_COMMA);
         String var_path = AS_STR(grouping(parser));
         FILE *file = fopen(var_path.data, "rb");
@@ -551,7 +562,7 @@ Value declare(Parser *parser)
 {
     Token ident = consume(parser); 
     expect(parser, TOKEN_EQUAL); 
-    Value result = expression(parser, PREC_NONE);
+    Value result = expression(parser, PREC_NONE, TOKEN_NONE);
 
     if (result.type == VALUE_STR) {
         result = VAL_STR(string_create(AS_STR(result).data, AS_STR(result).len));

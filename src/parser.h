@@ -38,5 +38,5 @@ typedef struct {
 Parser parser_create();
 void parser_destroy(Parser *parser);
 void parser_reset(Parser *parser, TokenList *list);
-Value expression(Parser *parser, precedence rbp);
+Value expression(Parser *parser, precedence rbp, TokenType expected_first_token);
 Value parse_expr(Parser *parser);

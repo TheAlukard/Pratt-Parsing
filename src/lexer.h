@@ -4,7 +4,8 @@
 #include <stdbool.h>
 
 typedef enum {
-    TOKEN_NUM, 
+    TOKEN_NONE = 0,
+    TOKEN_NUM,
     TOKEN_STRING,
     TOKEN_PLUS,
     TOKEN_MINUS,
