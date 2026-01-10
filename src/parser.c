@@ -416,7 +416,7 @@ bool export_variable(Parser *parser, FILE *f, String variable_name)
 {
     if (f == NULL) return false;
 
-    printf("var_len: %zu\n", variable_name.len);
+    // printf("var_len: %zu\n", variable_name.len);
     if (!map_has(&parser->map, variable_name)) return false;
 
     Value value = map_get(&parser->map, variable_name); 
