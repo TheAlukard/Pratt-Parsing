@@ -62,3 +62,19 @@ Boolean expressions:
 > 1 <= 1
 > (2 >= 90 && false) || (33 < 890 && true != false)
 ```
+
+Importing and Exporting variables (experimental):
+
+```
+> ./PrattParsing
+> let hi = 'hi'
+> export($hi, 'hi.txt')
+> true
+> exit
+```
+
+```
+> ./PrattParsing
+> let hi2 = import('hi', 'hi.txt')
+> hi
+```
