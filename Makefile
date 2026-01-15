@@ -1,7 +1,7 @@
 CC=gcc
 SRC=$(shell ls ./src/*.c)
-CFLAGS=-O3 -Werror -Wall -Wextra -pedantic -lm
-DFLAGS=-O0 -g -Wall -Wextra -pedantic -lm
+CFLAGS=-O3 -Werror -Wall -Wextra -lm
+DFLAGS=-O0 -g -Wall -Wextra -lm
 
 ifeq ($(OS),Windows_NT)
     CFLAGS += -D__USE_MINGW_ANSI_STDIO
