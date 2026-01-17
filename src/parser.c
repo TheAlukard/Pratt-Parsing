@@ -23,36 +23,37 @@ Value string(Parser *parser);
 Value boolean(Parser *parser);
 
 ParseRule rules[TOKEN_COUNT] = {
-    {NULL, NULL, PREC_NONE},
-    {number, NULL, PREC_NONE},
-    {string, NULL, PREC_NONE},
-    {NULL, binary, PREC_ADSUB},
-    {unary, binary, PREC_ADSUB},
-    {NULL, binary, PREC_MULDIV},
-    {NULL, binary, PREC_MULDIV},
-    {NULL, binary, PREC_POW},
-    {grouping, NULL, PREC_NONE},
-    {NULL, NULL, PREC_NONE},
-    {NULL, NULL, PREC_NONE},
-    {NULL, NULL, PREC_NONE},
-    {get_var, NULL, PREC_NONE},
-    {ans, NULL, PREC_NONE},
-    {identifier, NULL, PREC_NONE},
-    {declare, NULL, PREC_NONE},
-    {exit_prog, NULL, PREC_NONE},
-    {NULL, binary, PREC_OR},
-    {NULL, binary, PREC_AND},
-    {NULL, binary, PREC_EQUALITY},
-    {unary, NULL, PREC_UNARY},
-    {NULL, binary, PREC_EQUALITY},
-    {NULL, binary, PREC_COMP},
-    {NULL, binary, PREC_COMP},
-    {NULL, binary, PREC_COMP},
-    {NULL, binary, PREC_COMP},
-    {boolean, NULL, PREC_NONE},
-    {boolean, NULL, PREC_NONE},
-    {NULL, NULL, PREC_NONE},
-    {NULL, NULL, PREC_NONE},
+    {NULL, NULL, PREC_NONE},            // TOKEN_NONE 
+    {number, NULL, PREC_NONE},          // TOKEN_NUM
+    {string, NULL, PREC_NONE},          // TOKEN_STRING
+    {NULL, binary, PREC_ADSUB},         // TOKEN_PLUS
+    {unary, binary, PREC_ADSUB},        // TOKEN_MINUS
+    {NULL, binary, PREC_MULDIV},        // TOKEN_STAR
+    {NULL, binary, PREC_MULDIV},        // TOKEN_SLASH
+    {NULL, binary, PREC_POW},           // TOKEN_CARET
+    {grouping, NULL, PREC_NONE},        // TOKEN_LEFT_PAREN
+    {NULL, NULL, PREC_NONE},            // TOKEN_RIGHT_PAREN
+    {NULL, NULL, PREC_NONE},            // TOKEN_COMMA
+    {NULL, NULL, PREC_NONE},            // TOKEN_EQUAL
+    {get_var, NULL, PREC_NONE},         // TOKEN_DOLLAR
+    {ans, NULL, PREC_NONE},             // TOKEN_ANS
+    {identifier, NULL, PREC_NONE},      // TOKEN_IDENTIFIER
+    {declare, NULL, PREC_NONE},         // TOKEN_LET
+    {exit_prog, NULL, PREC_NONE},       // TOKEN_EXIT
+    {NULL, binary, PREC_OR},            // TOKEN_OR
+    {NULL, binary, PREC_AND},           // TOKEN_AND
+    {NULL, binary, PREC_EQUALITY},      // TOKEN_EQEQ
+    {unary, NULL, PREC_UNARY},          // TOKEN_NOT
+    {NULL, binary, PREC_EQUALITY},      // TOKEN_NOTEQ
+    {NULL, binary, PREC_COMP},          // TOKEN_LESS
+    {NULL, binary, PREC_COMP},          // TOKEN_LESSEQ
+    {NULL, binary, PREC_COMP},          // TOKEN_GREATER
+    {NULL, binary, PREC_COMP},          // TOKEN_GREATEREQ
+    {boolean, NULL, PREC_NONE},         // TOKEN_TRUE
+    {boolean, NULL, PREC_NONE},         // TOKEN_FALSE
+    {NULL, NULL, PREC_NONE},            // TOKEN_END
+    {NULL, NULL, PREC_NONE},            // TOKEN_ERROR
+    // TOKEN_COUNT
 };
 
 Value exit_prog(Parser *parser)
