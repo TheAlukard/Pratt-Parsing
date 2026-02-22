@@ -9,7 +9,7 @@ mingw32-make
 make
 ```
 
-# Usage
+# Examples
 
 Basic mathematical operations:
 
