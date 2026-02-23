@@ -7,15 +7,16 @@
 
 void print_value(Value value)
 {
+    printf(">> ");
     switch (value.type) {
         case VALUE_NUM:
-            printf("> %0.25Lf\n", AS_NUM(value));
+            printf("%0.25Lf\n", AS_NUM(value));
             break;
         case VALUE_STR:
-            printf("> %.*s\n", (int)AS_STR(value).len, AS_STR(value).data);
+            printf("%.*s\n", (int)AS_STR(value).len, AS_STR(value).data);
             break;
         case VALUE_BOOL:
-            printf ("> %s\n", AS_BOOL(value) ? "true" : "false");
+            printf ("%s\n", AS_BOOL(value) ? "true" : "false");
             break;
     }
 }
