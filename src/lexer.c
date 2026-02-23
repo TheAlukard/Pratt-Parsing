@@ -1,5 +1,6 @@
 #include "lexer.h"
 #include "string.h"
+#include "log.h"
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
@@ -89,7 +90,7 @@ static void match(Lexer *lexer, Token *token, char expected, TokenType type)
         token->type = type;
     }
     else {
-        fprintf(stderr, "Error: Unexpected Token\n");
+        log_info("Error: Unexpected Token\n");
         lexer->error = true;
     }
 }
@@ -126,7 +127,7 @@ static Token parse_string_literal(Lexer *lexer)
     token.type = TOKEN_STRING;
 
     if (consume(lexer) != quote) {
-        fprintf(stderr, "Error: Mismatching quotes.");
+        log_info("Error: Mismatching quotes.");
         lexer->error = true;
     }
     

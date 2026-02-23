@@ -2,6 +2,7 @@
 #include "arena.h"
 #include "lexer.h"
 #include "map.h"
+#include "log.h"
 #include "value.h"
 #include <math.h> 
 #include <stdio.h>
@@ -116,7 +117,7 @@ Token expect(Parser *parser, TokenType expected)
         return consume(parser);
     }
     else {
-        fprintf(stderr, "Error: Invalid Token '%.*s'\n", token.len, token.start);
+        log_info("Error: Invalid Token '%.*s'\n", token.len, token.start);
         parser->error = true;
         return (Token){.type = TOKEN_ERROR};
     }
@@ -130,7 +131,7 @@ Value do_operation(Parser *parser, Value left, Value right, Token oper)
         char buffer2[100];
         value_to_str(buffer2, &right);
 
-        fprintf(stderr, "Error: Value: %s of type: %s has a different type than Value: %s of type: %s\n",
+        log_info("Error: Value: %s of type: %s has a different type than Value: %s of type: %s\n",
                 buffer1, value_type_to_str(left.type), buffer2, value_type_to_str(right.type));
 
         parser->error = true;
@@ -140,7 +141,7 @@ Value do_operation(Parser *parser, Value left, Value right, Token oper)
 
     #define invalid_op()\
         do { \
-            fprintf(stderr, "Error: Can't perform this operation: %.*s on a value of this type: %s\n",\
+            log_info("Error: Can't perform this operation: %.*s on a value of this type: %s\n",\
                     oper.len, oper.start, value_type_to_str(left.type));\
             parser->error = true;\
         } while (0)
@@ -221,7 +222,7 @@ Value expression(Parser *parser, precedence rbp, TokenType expected_first_token)
     Token token = consume(parser);
     if (expected_first_token != TOKEN_NONE && token.type != expected_first_token) {
         parser->error = true;
-        fprintf(stderr, "The first token wasn't as expected.\n");
+        log_info("The first token wasn't as expected.\n");
         return VAL_BOOL(false);
     }
     Value left = get_rule(token)->prefix(parser);
@@ -506,25 +507,25 @@ Value identifier(Parser *parser)
         expect(parser, TOKEN_LEFT_PAREN);
 
         if (expect(parser, TOKEN_DOLLAR).type == TOKEN_ERROR) {
-            fprintf(stderr, "Error: First argument should be a variable starting with '$'.\n");
+            log_info("Error: First argument should be a variable starting with '$'.\n");
             return VAL_BOOL(false);
         }
 
         Token ident = expect(parser, TOKEN_IDENTIFIER);
         if (ident.type == TOKEN_ERROR) {
-            fprintf(stderr, "Error: Invalid identifier.\n");
+            log_info("Error: Invalid identifier.\n");
             return VAL_BOOL(false);
         }
 
         String var_name = (String){.data = (char*)ident.start, .len = ident.len};
 
         if (!map_has(&parser->map, var_name)) {
-            fprintf(stderr, "Error: variable '%.*s' doesn't exist.\n", (int)ident.len, ident.start);
+            log_info("Error: variable '%.*s' doesn't exist.\n", (int)ident.len, ident.start);
             return VAL_BOOL(false);
         }
 
         if (parser->error) {
-            fprintf(stderr, "Error: Couldn't export variable because of parsing error.\n");
+            log_info("Error: Couldn't export variable because of parsing error.\n");
             return VAL_BOOL(false);
         }
 
@@ -532,13 +533,13 @@ Value identifier(Parser *parser)
         String var_path = AS_STR(grouping(parser));
         FILE *file = fopen(var_path.data, "wb");
         if (file == NULL) {
-            fprintf(stderr, "Error: Couldn't write to file '%s'\n", var_path.data);
+            log_info("Error: Couldn't write to file '%s'\n", var_path.data);
             parser->error = true;
             return VAL_BOOL(false);
         }
         if (!export_variable(parser, file, var_name)) {
             fclose(file);
-            fprintf(stderr, "Error: Failed to export variable '%s'\n", var_name.data);
+            log_info("Error: Failed to export variable '%s'\n", var_name.data);
             parser->error = true;
             return VAL_BOOL(false);
         }
@@ -552,14 +553,14 @@ Value identifier(Parser *parser)
         String var_path = AS_STR(grouping(parser));
         FILE *file = fopen(var_path.data, "rb");
         if (file == NULL) {
-            fprintf(stderr, "Couldn't read from file '%s'\n", var_path.data);
+            log_info("Couldn't read from file '%s'\n", var_path.data);
             parser->error = true;
             return VAL_BOOL(false);
         }
         Value var = {0};
         if (!import_variable(parser, file, var_name, &var)) {
             fclose(file);
-            fprintf(stderr, "Failed to import variable '%s'\n", var_name.data);
+            log_info("Failed to import variable '%s'\n", var_name.data);
             parser->error = true;
             return VAL_BOOL(false);
         }
@@ -573,7 +574,7 @@ Value identifier(Parser *parser)
         }
     }
 
-    fprintf(stderr, "Error: Unkown identifier '%.*s'\n", ident.len, ident.start);
+    log_info("Error: Unkown identifier '%.*s'\n", ident.len, ident.start);
     parser->error = true;
 
     return VAL_BOOL(false);
@@ -612,7 +613,7 @@ Value get_var(Parser *parser)
     String str = {.data = (char*)ident.start, .len = ident.len};
     
     if (!map_has(&parser->map, str)) {
-        fprintf(stderr, "Error: Variable '%.*s' doesn't exist\n", ident.len, ident.start);
+        log_info("Error: Variable '%.*s' doesn't exist\n", ident.len, ident.start);
         parser->error = true;
         for (size_t i = 0; i < parser->map.capacity; i++) {
             if (parser->map.items[i].valid) {
