@@ -28,7 +28,7 @@ int main(void)
     Parser parser = parser_create();
     
     while (true) {
-        printf("> ");
+        printf(">> ");
         fgets(buffer, sizeof(char) * buffer_len, stdin);
         list_clear(&list);
         if (tokenize(buffer, &list)) {
