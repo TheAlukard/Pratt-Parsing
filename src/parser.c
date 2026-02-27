@@ -76,7 +76,8 @@ Parser parser_create()
     parser.ans = VAL_NUM(0);
     parser.map = map_new();
     parser.arena = arena_init(1024);
-    
+    parser.logging = (LoginInfo){.path = "log.txt"};
+
     return parser;
 }
 
@@ -92,6 +93,11 @@ void parser_destroy(Parser *parser)
     parser->current = 0;
     arena_deinit(&parser->arena);
     map_delete(&parser->map);
+    if (parser->logging.file && parser->logging.path) {
+        if (fclose(parser->logging.file) != 0) {
+            fprintf(stderr, "Failed to close '%s'\n", parser->logging.path);
+        }
+    }
 }
 
 Token prev(Parser *parser)
@@ -117,7 +123,7 @@ Token expect(Parser *parser, TokenType expected)
         return consume(parser);
     }
     else {
-        log_info("Error: Invalid Token '%.*s'\n", token.len, token.start);
+        log_info(&parser->logging, "Error: Invalid Token '%.*s'\n", token.len, token.start);
         parser->error = true;
         return (Token){.type = TOKEN_ERROR};
     }
@@ -131,7 +137,7 @@ Value do_operation(Parser *parser, Value left, Value right, Token oper)
         char buffer2[100];
         value_to_str(buffer2, &right);
 
-        log_info("Error: Value: %s of type: %s has a different type than Value: %s of type: %s\n",
+        log_info(&parser->logging, "Error: Value: %s of type: %s has a different type than Value: %s of type: %s\n",
                 buffer1, value_type_to_str(left.type), buffer2, value_type_to_str(right.type));
 
         parser->error = true;
@@ -141,7 +147,7 @@ Value do_operation(Parser *parser, Value left, Value right, Token oper)
 
     #define invalid_op()\
         do { \
-            log_info("Error: Can't perform this operation: %.*s on a value of this type: %s\n",\
+            log_info(&parser->logging, "Error: Can't perform this operation: %.*s on a value of this type: %s\n",\
                     oper.len, oper.start, value_type_to_str(left.type));\
             parser->error = true;\
         } while (0)
@@ -222,7 +228,7 @@ Value expression(Parser *parser, precedence rbp, TokenType expected_first_token)
     Token token = consume(parser);
     if (expected_first_token != TOKEN_NONE && token.type != expected_first_token) {
         parser->error = true;
-        log_info("The first token wasn't as expected.\n");
+        log_info(&parser->logging, "The first token wasn't as expected.\n");
         return VAL_BOOL(false);
     }
     Value left = get_rule(token)->prefix(parser);
@@ -507,25 +513,25 @@ Value identifier(Parser *parser)
         expect(parser, TOKEN_LEFT_PAREN);
 
         if (expect(parser, TOKEN_DOLLAR).type == TOKEN_ERROR) {
-            log_info("Error: First argument should be a variable starting with '$'.\n");
+            log_info(&parser->logging, "Error: First argument should be a variable starting with '$'.\n");
             return VAL_BOOL(false);
         }
 
         Token ident = expect(parser, TOKEN_IDENTIFIER);
         if (ident.type == TOKEN_ERROR) {
-            log_info("Error: Invalid identifier.\n");
+            log_info(&parser->logging, "Error: Invalid identifier.\n");
             return VAL_BOOL(false);
         }
 
         String var_name = (String){.data = (char*)ident.start, .len = ident.len};
 
         if (!map_has(&parser->map, var_name)) {
-            log_info("Error: variable '%.*s' doesn't exist.\n", (int)ident.len, ident.start);
+            log_info(&parser->logging, "Error: variable '%.*s' doesn't exist.\n", (int)ident.len, ident.start);
             return VAL_BOOL(false);
         }
 
         if (parser->error) {
-            log_info("Error: Couldn't export variable because of parsing error.\n");
+            log_info(&parser->logging, "Error: Couldn't export variable because of parsing error.\n");
             return VAL_BOOL(false);
         }
 
@@ -533,13 +539,13 @@ Value identifier(Parser *parser)
         String var_path = AS_STR(grouping(parser));
         FILE *file = fopen(var_path.data, "wb");
         if (file == NULL) {
-            log_info("Error: Couldn't write to file '%s'\n", var_path.data);
+            log_info(&parser->logging, "Error: Couldn't write to file '%s'\n", var_path.data);
             parser->error = true;
             return VAL_BOOL(false);
         }
         if (!export_variable(parser, file, var_name)) {
             fclose(file);
-            log_info("Error: Failed to export variable '%s'\n", var_name.data);
+            log_info(&parser->logging, "Error: Failed to export variable '%s'\n", var_name.data);
             parser->error = true;
             return VAL_BOOL(false);
         }
@@ -553,14 +559,14 @@ Value identifier(Parser *parser)
         String var_path = AS_STR(grouping(parser));
         FILE *file = fopen(var_path.data, "rb");
         if (file == NULL) {
-            log_info("Couldn't read from file '%s'\n", var_path.data);
+            log_info(&parser->logging, "Couldn't read from file '%s'\n", var_path.data);
             parser->error = true;
             return VAL_BOOL(false);
         }
         Value var = {0};
         if (!import_variable(parser, file, var_name, &var)) {
             fclose(file);
-            log_info("Failed to import variable '%s'\n", var_name.data);
+            log_info(&parser->logging, "Failed to import variable '%s'\n", var_name.data);
             parser->error = true;
             return VAL_BOOL(false);
         }
@@ -574,7 +580,7 @@ Value identifier(Parser *parser)
         }
     }
 
-    log_info("Error: Unkown identifier '%.*s'\n", ident.len, ident.start);
+    log_info(&parser->logging, "Error: Unkown identifier '%.*s'\n", ident.len, ident.start);
     parser->error = true;
 
     return VAL_BOOL(false);
@@ -613,7 +619,7 @@ Value get_var(Parser *parser)
     String str = {.data = (char*)ident.start, .len = ident.len};
     
     if (!map_has(&parser->map, str)) {
-        log_info("Error: Variable '%.*s' doesn't exist\n", ident.len, ident.start);
+        log_info(&parser->logging, "Error: Variable '%.*s' doesn't exist\n", ident.len, ident.start);
         parser->error = true;
         for (size_t i = 0; i < parser->map.capacity; i++) {
             if (parser->map.items[i].valid) {

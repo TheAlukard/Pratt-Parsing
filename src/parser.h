@@ -1,6 +1,7 @@
 #pragma once
 
 #include "lexer.h"
+#include "log.h"
 #include "map.h"
 #include "value.h"
 #include "arena.h"
@@ -25,6 +26,7 @@ typedef struct {
     Map map;
     Arena arena;
     bool error;
+    LoginInfo logging;
 } Parser;
 
 typedef Value (*ParseFn)(Parser *parser);
