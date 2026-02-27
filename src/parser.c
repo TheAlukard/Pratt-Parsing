@@ -231,7 +231,15 @@ Value expression(Parser *parser, precedence rbp, TokenType expected_first_token)
         log_info(&parser->logging, "The first token wasn't as expected.\n");
         return VAL_BOOL(false);
     }
-    Value left = get_rule(token)->prefix(parser);
+
+    ParseRule *left_rule = get_rule(token);
+    if (!left_rule->prefix) {
+        parser->error = true;
+        log_info(&parser->logging, "The token '%.*s' must be exceeded by a value.\n", token.len, token.start);
+        return VAL_BOOL(false);
+    }
+
+    Value left = left_rule->prefix(parser);
 
     while ((int)rbp < get_rule(peek(parser))->lbp) {
         if (parser->error) return VAL_NUM(0.0);
