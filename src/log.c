@@ -1,46 +1,55 @@
 #include "log.h"
+#include <time.h>
 
-bool log_info(const char *s, ...)
+#define FAIL(...) do { fprintf(stderr, __VA_ARGS__); return false; } while (0)
+
+bool log_info(LoginInfo *li, const char *s, ...)
 {
-    #define buff_len 1024
-    #define t_len 50
+    if (!li)
+        FAIL("Error: Login Info is NULL\n");
+    if (!li->path)
+        FAIL("Error: Empty file path\n");
 
     va_list args;
-    va_start(args, s);
-    static char buffer[buff_len];
-    static char t_buff[50];
+    enum { buff_len = 1024, t_len = 128 };
+    char buffer[buff_len];
+    char t_buff[t_len];
     time_t timer;
     time(&timer);
-    struct tm *t = localtime(&timer);
-    const char *time_zone = t->tm_zone;
-    const int year = t->tm_year + 1900;
-    const int month = t->tm_mon + 1;
-    const int day= t->tm_mday;
-    const int hour= t->tm_hour;
-    const int minute= t->tm_min;
-    const int second= t->tm_sec;
+    struct tm t = {0};
 
-    int time_w = snprintf(t_buff, t_len, "-- %s %d-%d-%d %d:%d:%d -- ", time_zone, day, month, year, hour, minute, second);
-    int buff_w = vsnprintf(buffer, buff_len, s, args);
+    if (localtime_r(&timer, &t) != &t)
+        FAIL("Failed to get local time\n");
 
-    bool success = true;
+    size_t time_written = strftime(t_buff, t_len, "-- %Z %d-%m-%Y %H:%M:%S -- ", &t);
 
-    if (time_w && buff_w) {
-        FILE *f = fopen("log.txt", "ab");
+    if (!time_written)
+        FAIL("Failed to parse local time\n");
 
-        if (f) {
-            fwrite(t_buff, sizeof(char), time_w, f);
-            fwrite(buffer, sizeof(char), buff_w, f);
-            fclose(f);
-        }
-        else success = false;
-    }
-    else success = false;
-
+    va_start(args, s);
+    int buff_written = vsnprintf(buffer, buff_len, s, args);
     va_end(args);
 
-    return success;
+    if (buff_written < 0 || buff_written >= buff_len)
+        FAIL("Failed to parse logging info\n");
 
-    #undef buff_len
-    #undef t_len
+    if (!li->file) {
+        li->f = fopen(li->path, "ab");
+        if !(li->file)
+            FAIL("Failed to open '%s'\n", li->path); 
+    }
+
+    size_t time_fwrite = fwrite(t_buff, sizeof(char), time_written, li->file);
+    if (time_fwrite != (size_t)time_written)
+        FAIL("Failed to write time data to '%s'\n", li->path);
+
+    size_t buff_fwrite = fwrite(buffer, sizeof(char), buff_written, li->file);
+    if (buff_fwrite != (size_t)buff_written)
+        FAIL("Failed to write logging data to '%s'\n", li->path);
+
+    size_t newline = fwrite("\n", 1, 1, li->file);
+    if (newline != 1)
+        FAIL("Failed to write newline to '%s'\n", li->path);
+
+    return true;
 }

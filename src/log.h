@@ -5,4 +5,9 @@
 #include <time.h>
 #include <stdarg.h>
 
-bool log_info(const char *s, ...);
+typedef struct {
+    const char *path;
+    FILE *file;
+} LoginInfo;
+
+bool log_info(LoginInfo *li, const char *s, ...);
