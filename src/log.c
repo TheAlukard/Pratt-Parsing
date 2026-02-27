@@ -34,8 +34,8 @@ bool log_info(LoginInfo *li, const char *s, ...)
         FAIL("Failed to parse logging info\n");
 
     if (!li->file) {
-        li->f = fopen(li->path, "ab");
-        if !(li->file)
+        li->file = fopen(li->path, "ab");
+        if (!li->file)
             FAIL("Failed to open '%s'\n", li->path); 
     }
 
