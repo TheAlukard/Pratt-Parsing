@@ -1,6 +1,6 @@
 #include "lexer.h"
-#include "string.h"
 #include "log.h"
+#include "string.h"
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
@@ -11,6 +11,7 @@ Lexer lexer_new(const char *text)
         .text = text,
         .current = 0,
         .error = false,
+        .logging = (LoginInfo){.path = "log.txt"},
     };
 
     return lexer;
@@ -90,7 +91,7 @@ static void match(Lexer *lexer, Token *token, char expected, TokenType type)
         token->type = type;
     }
     else {
-        log_info("Error: Unexpected Token\n");
+        log_info(&lexer->logging, "Error: Unexpected Token\n");
         lexer->error = true;
     }
 }
@@ -127,7 +128,7 @@ static Token parse_string_literal(Lexer *lexer)
     token.type = TOKEN_STRING;
 
     if (consume(lexer) != quote) {
-        log_info("Error: Mismatching quotes.");
+        log_info(&lexer->logging, "Error: Mismatching quotes.");
         lexer->error = true;
     }
     
@@ -295,6 +296,12 @@ bool tokenize(const char *text, TokenList *output)
     }
 
     list_push(output, token);
+
+    if (lexer.logging.file && lexer.logging.path) {
+        if (fclose(lexer.logging.file) != 0) {
+            fprintf(stderr, "Failed to close '%s'\n", lexer.logging.path);
+        }
+    }
 
     return !lexer.error;
 }

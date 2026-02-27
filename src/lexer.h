@@ -2,6 +2,7 @@
 
 #include "list.h"
 #include <stdbool.h>
+#include "log.h"
 
 typedef enum {
     TOKEN_NONE = 0,
@@ -47,6 +48,7 @@ typedef struct {
     const char *text;
     int current;
     bool error;
+    LoginInfo logging;
 } Lexer;
 
 LIST_DEF(TokenList, Token);
