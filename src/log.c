@@ -1,14 +1,33 @@
 #include "log.h"
+#include <stdio.h>
+#include <stdint.h>
 #include <time.h>
 
 #define FAIL(...) do { fprintf(stderr, __VA_ARGS__); return false; } while (0)
+
+LoginInfo log_create(const char *path, FILE *file, double flush_interval)
+{
+    if (!path) {
+        fprintf(stderr, "Error 'log_create' : Empty file path\n");
+        return (LoginInfo){0};
+    }
+
+    LoginInfo info = {
+        .path = path,
+        .file = file,
+        .flush_interval = flush_interval > 0.f ? flush_interval : 0.25,
+        .last_flushed = time(0),
+    };
+
+    return info;
+}
 
 bool log_info(LoginInfo *li, const char *s, ...)
 {
     if (!li)
         FAIL("Error: Login Info is NULL\n");
     if (!li->path)
-        FAIL("Error: Empty file path\n");
+        FAIL("Error 'log_info' : Empty file path\n");
 
     va_list args;
     enum { buff_len = 1024, t_len = 128 };
@@ -50,6 +69,16 @@ bool log_info(LoginInfo *li, const char *s, ...)
     size_t newline = fwrite("\n", 1, 1, li->file);
     if (newline != 1)
         FAIL("Failed to write newline to '%s'\n", li->path);
+
+    double elapsed = difftime(time(0), li->last_flushed);
+
+    if (elapsed >= li->flush_interval) {
+        li->last_flushed = time(0);
+        if (fflush(li->file) != 0)
+            FAIL("Failed to flush file '%s'\n", li->path);
+
+        printf("Flushed!\n");
+    }
 
     return true;
 }
