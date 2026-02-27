@@ -26,7 +26,7 @@ typedef struct {
     Map map;
     Arena arena;
     bool error;
-    LoginInfo logging;
+    LoggingInfo logging;
 } Parser;
 
 typedef Value (*ParseFn)(Parser *parser);

@@ -10,7 +10,7 @@ typedef struct {
     FILE *file;
     double flush_interval;
     time_t last_flushed;
-} LoginInfo;
+} LoggingInfo;
 
-LoginInfo log_create(const char *path, FILE *file, double flush_interval);
-bool log_info(LoginInfo *li, const char *s, ...);
+LoggingInfo log_create(const char *path, FILE *file, double flush_interval);
+bool log_info(LoggingInfo *li, const char *s, ...);

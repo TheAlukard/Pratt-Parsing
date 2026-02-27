@@ -5,14 +5,14 @@
 
 #define FAIL(...) do { fprintf(stderr, __VA_ARGS__); return false; } while (0)
 
-LoginInfo log_create(const char *path, FILE *file, double flush_interval)
+LoggingInfo log_create(const char *path, FILE *file, double flush_interval)
 {
     if (!path) {
         fprintf(stderr, "Error 'log_create' : Empty file path\n");
-        return (LoginInfo){0};
+        return (LoggingInfo){0};
     }
 
-    LoginInfo info = {
+    LoggingInfo info = {
         .path = path,
         .file = file,
         .flush_interval = flush_interval > 0.f ? flush_interval : 0.25,
@@ -22,7 +22,7 @@ LoginInfo log_create(const char *path, FILE *file, double flush_interval)
     return info;
 }
 
-bool log_info(LoginInfo *li, const char *s, ...)
+bool log_info(LoggingInfo *li, const char *s, ...)
 {
     if (!li)
         FAIL("Error: Login Info is NULL\n");

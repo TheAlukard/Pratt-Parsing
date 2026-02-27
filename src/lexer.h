@@ -48,7 +48,7 @@ typedef struct {
     const char *text;
     int current;
     bool error;
-    LoginInfo logging;
+    LoggingInfo logging;
 } Lexer;
 
 LIST_DEF(TokenList, Token);
