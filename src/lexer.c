@@ -11,7 +11,7 @@ Lexer lexer_new(const char *text)
         .text = text,
         .current = 0,
         .error = false,
-        .logging = (LoginInfo){.path = "log.txt"},
+        .logging = log_create("log.txt", NULL, 0),
     };
 
     return lexer;
