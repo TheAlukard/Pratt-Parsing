@@ -12,5 +12,8 @@ all: PrattParsing
 PrattParsing: $(SRC) 
 	$(CC) $(CFLAGS) -o PrattParsing $(SRC)
 
+run: PrattParsing
+	./PrattParsing
+
 debug: $(SRC)
 	$(CC) $(DFLAGS) -o PrattParsing $(SRC)
