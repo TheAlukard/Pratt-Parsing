@@ -23,7 +23,7 @@ void print_value(Value value)
 
 int main(void)
 {
-    #define buffer_len 1000
+    enum { buffer_len = 1000 };
     char buffer[buffer_len]; 
     TokenList list = {0};
     Parser parser = parser_create();
