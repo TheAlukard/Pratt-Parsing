@@ -40,7 +40,7 @@ bool log_info(LoggingInfo *li, const char *s, ...)
     if (localtime_r(&timer, &t) != &t)
         FAIL("Failed to get local time\n");
 
-    size_t time_written = strftime(t_buff, t_len, "-- %Z %d-%m-%Y %H:%M:%S -- ", &t);
+    size_t time_written = strftime(t_buff, t_len, "-- %Z %d-%m-%Y %I:%M:%S %p -- ", &t);
 
     if (!time_written)
         FAIL("Failed to parse local time\n");
