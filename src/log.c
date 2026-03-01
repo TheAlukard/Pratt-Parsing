@@ -76,8 +76,6 @@ bool log_info(LoggingInfo *li, const char *s, ...)
         li->last_flushed = time(0);
         if (fflush(li->file) != 0)
             FAIL("Failed to flush file '%s'\n", li->path);
-
-        printf("Flushed!\n");
     }
 
     return true;
