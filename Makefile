@@ -13,7 +13,8 @@ PrattParsing: $(SRC)
 	$(CC) $(CFLAGS) -o PrattParsing $(SRC)
 
 test: $(SRC) 
-	$(CC) -DTEST $(CFLAGS) -o PrattParsing $(SRC)
+	$(CC) -DTEST $(CFLAGS) -o PrattParsingt $(SRC)
+	./PrattParsingt
 
 debug: $(SRC)
 	$(CC) $(DFLAGS) -o PrattParsing $(SRC)
