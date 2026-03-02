@@ -6,7 +6,6 @@ bool get_random_str(char *buff, size_t len)
 {
     if (len <= 0 || !buff) return false;
 
-    srand(time(0));
     size_t i = 0;
     for (; i < len - 1; i++) {
         char c = rand() % 128;
