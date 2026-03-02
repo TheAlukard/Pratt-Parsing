@@ -71,13 +71,13 @@ int main(void)
     TokenList list = {0};
     Parser parser = parser_create();
 #ifdef TEST
-    srand(time(0));
     LoggingInfo logger = log_create("tests.txt", NULL, 1);
-    while (true) {
+    for (int i = 0; i < 1000; i++) {
+        srand(time(0));
         size_t len = rand() % buffer_len;
         if (len == 0) len = 1;
         get_random_str(buffer, len);
-        log_info(&logger, "'%s'", buffer);
+        log_info(&logger, "%s", buffer);
         Value result = get_result(&parser, &list, buffer);
         log_value(&logger, result);
     }
