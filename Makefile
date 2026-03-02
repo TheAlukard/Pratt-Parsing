@@ -12,8 +12,11 @@ all: PrattParsing
 PrattParsing: $(SRC) 
 	$(CC) $(CFLAGS) -o PrattParsing $(SRC)
 
-run: PrattParsing
-	./PrattParsing
+test: $(SRC) 
+	$(CC) -DTEST $(CFLAGS) -o PrattParsing $(SRC)
 
 debug: $(SRC)
 	$(CC) $(DFLAGS) -o PrattParsing $(SRC)
+
+run: PrattParsing
+	./PrattParsing
