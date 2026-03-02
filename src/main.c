@@ -4,6 +4,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "value.h"
+#include "test.h"
 
 void print_value(Value value)
 {
@@ -21,28 +22,41 @@ void print_value(Value value)
     }
 }
 
+Value get_result(Parser *parser, TokenList *tl, char *buffer)
+{
+    list_clear(tl);
+    if (tokenize(buffer, tl)) {
+        // print_tokenlist(&tl);
+        parser_reset(parser, tl);
+        Value result = parse_expr(parser);
+        if (parser->error) {
+            const char *err = "ERROR: Parsing Failed!";
+            String s = string_create(err, strlen(err));
+            return VAL_STR(s);
+        }
+        else {
+            return result;
+        }
+    }
+    else {
+        const char *err = "ERROR: Tokenization Failed!";
+        String s = string_create(err, strlen(err));
+        return VAL_STR(s);
+    }
+}
+
 int main(void)
 {
     enum { buffer_len = 1000 };
     char buffer[buffer_len]; 
     TokenList list = {0};
     Parser parser = parser_create();
-    
+
     while (true) {
         printf(">> ");
         fgets(buffer, sizeof(char) * buffer_len, stdin);
-        list_clear(&list);
-        if (tokenize(buffer, &list)) {
-            // print_tokenlist(&list);
-            parser_reset(&parser, &list);
-            Value result = parse_expr(&parser);
-            if (parser.error) {
-                fprintf(stderr, "ERROR: Parsing Failed!\n");
-            }
-            else {
-                print_value(result);
-            }
-        }
+        Value result = get_result(&parser, &list, buffer);
+        print_value(result);
     }
 
     parser_destroy(&parser);
