@@ -72,8 +72,8 @@ int main(void)
     Parser parser = parser_create();
 #ifdef TEST
     LoggingInfo logger = log_create("tests.txt", NULL, 1);
+    srand(time(0));
     for (int i = 0; i < 1000; i++) {
-        srand(time(0));
         size_t len = rand() % buffer_len;
         if (len == 0) len = 1;
         get_random_str(buffer, len);
