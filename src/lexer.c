@@ -11,7 +11,7 @@ Lexer lexer_new(const char *text)
         .text = text,
         .current = 0,
         .error = false,
-        .logging = log_create("log.txt", NULL, 0),
+        .logging = log_create("lexer_log.txt", NULL, 0),
     };
 
     return lexer;
