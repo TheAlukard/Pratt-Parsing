@@ -91,7 +91,7 @@ static void match(Lexer *lexer, Token *token, char expected, TokenType type)
         token->type = type;
     }
     else {
-        log_info(&lexer->logging, "Error: Unexpected Token\n");
+        log_info(&lexer->logging, "Error: Unexpected Token");
         lexer->error = true;
     }
 }
