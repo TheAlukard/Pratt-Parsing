@@ -16,10 +16,10 @@ endif
 all: $(BUILD) $(EXE) $(TEST) $(DEBUG)
 
 $(EXE): $(SRC)
-	$(CC) $(CFLAGS) -o $(EXE) $(SRC) $(LFLAGS)
+	$(CC) $(DEFS) $(CFLAGS) -o $(EXE) $(SRC) $(LFLAGS)
 
 $(TEST): $(SRC)
-	$(CC) -DTEST $(CFLAGS) -o $(TEST) $(SRC) $(LFLAGS)
+	$(CC) -DTEST $(DEFS) $(CFLAGS) -o $(TEST) $(SRC) $(LFLAGS)
 
 $(DEBUG): $(SRC)
 	$(CC) $(DEFS) $(DFLAGS) -o $(DEBUG) $(SRC) $(LFLAGS)
