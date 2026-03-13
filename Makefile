@@ -23,13 +23,13 @@ $(DEBUG): $(SRC)
 	$(CC) $(DEFS) $(DFLAGS) -o $(DEBUG) $(SRC)
 
 run: $(EXE)
-	./build/pratt-parsing
+	./$(EXE)
 
 debug: $(DEBUG)
-	./buid/pratt-parsing-debug
+	./$(DEBUG)
 
 test: $(TEST)
-	./buid/pratt-parsing-test
+	./$(TEST)
 
 $(BUILD):
 	mkdir build
