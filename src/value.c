@@ -3,12 +3,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 String string_create(const char *text, size_t len)
 {
     String str;
     str.len = len;
     str.data = malloc(sizeof(char) * (str.len + 1));
+    assert(text && len && "Text doesn't exist");
     memcpy(str.data, text, sizeof(char) * len);
     str.data[str.len] = '\0';
 
@@ -64,6 +66,7 @@ String string_add(Arena *arena, String *one, String *two)
     String str;
     str.len = one->len + two->len;
     str.data = arena_alloc(arena, str.len * sizeof(char));
+
     memcpy(str.data, one->data, one->len * sizeof(char));
     memcpy(&str.data[one->len], two->data, two->len * sizeof(char));
 

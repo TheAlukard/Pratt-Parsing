@@ -1,5 +1,6 @@
 #include "arena.h"
 #include <stdlib.h>
+#include <assert.h>
 
 Arena arena_init(size_t capacity)
 {
@@ -21,7 +22,7 @@ void arena_deinit(Arena *arena)
 
 void* arena_alloc(Arena *arena, size_t size)
 {
-    if (size > arena->capacity) return NULL;
+    assert(size + arena->ptr <= arena->capacity && "Arena ran out of space, fix later");
 
     if (arena->ptr + size > arena->capacity) {
         arena->ptr = 0;
