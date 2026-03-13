@@ -244,7 +244,13 @@ Value expression(Parser *parser, precedence rbp, TokenType expected_first_token)
     while ((int)rbp < get_rule(peek(parser))->lbp) {
         if (parser->error) return VAL_NUM(0.0);
         token = consume(parser);
-        Value right = get_rule(token)->infix(parser); 
+        ParseRule *right_rule = get_rule(token);
+        if (!right_rule->infix) {
+            parser->error = true;
+            log_info(&parser->logging, "The token '%.*s' must be preceeded by a value.", token.len, token.start);
+            return VAL_BOOL(false);
+        }
+        Value right = right_rule->infix(parser); 
         left = do_operation(parser, left, right, token);
     }
 
@@ -647,8 +653,9 @@ Value get_var(Parser *parser)
 Value number(Parser *parser)
 {
     Token num = prev(parser);
-    static char temp[100];
-    sprintf(temp, "%.*s", num.len, num.start);
+    enum { temp_len = 100};
+    static char temp[temp_len];
+    snprintf(temp, temp_len, "%.*s", num.len, num.start);
     Value result = VAL_NUM(strtold(temp, NULL));
 
     return result;
