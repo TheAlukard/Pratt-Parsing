@@ -11,7 +11,6 @@ ifeq ($(OS),Windows_NT)
     CFLAGS += -D__USE_MINGW_ANSI_STDIO
 endif
 
-
 all: $(BUILD) $(EXE) $(TEST) $(DEB)
 
 $(EXE): $(SRC)
