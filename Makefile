@@ -1,11 +1,13 @@
 CC=gcc
 SRC=$(wildcard ./src/*.c)
-CFLAGS=-O3 -Werror -Wall -Wextra -lm
-DFLAGS=-O0 -g -Wall -Wextra -lm
+CFLAGS=-O3 -Werror -Wall -Wextra
+DFLAGS=-O0 -g -Wall -Wextra
+LFLAGS=-lm
 BUILD=build
 EXE=$(BUILD)/pratt-parsing
 TEST=$(BUILD)/pratt-parsing-test
 DEBUG=$(BUILD)/pratt-parsing-debug
+DEFS=
 
 ifeq ($(OS),Windows_NT)
     CFLAGS += -D__USE_MINGW_ANSI_STDIO
@@ -14,13 +16,13 @@ endif
 all: $(BUILD) $(EXE) $(TEST) $(DEBUG)
 
 $(EXE): $(SRC)
-	$(CC) $(CFLAGS) -o $(EXE) $(SRC)
+	$(CC) $(CFLAGS) -o $(EXE) $(SRC) $(LFLAGS)
 
 $(TEST): $(SRC)
-	$(CC) -DTEST $(CFLAGS) -o $(TEST) $(SRC)
+	$(CC) -DTEST $(CFLAGS) -o $(TEST) $(SRC) $(LFLAGS)
 
 $(DEBUG): $(SRC)
-	$(CC) $(DEFS) $(DFLAGS) -o $(DEBUG) $(SRC)
+	$(CC) $(DEFS) $(DFLAGS) -o $(DEBUG) $(SRC) $(LFLAGS)
 
 run: $(EXE)
 	./$(EXE)
@@ -32,7 +34,7 @@ test: $(TEST)
 	./$(TEST)
 
 $(BUILD):
-	mkdir build
+	mkdir -p $(BUILD)
 
 .PHONY: clean
 clean:
