@@ -1,29 +1,35 @@
 CC=gcc
-SRC=$(shell ls ./src/*.c)
+SRC=$(wildcard ./src/*.c)
 CFLAGS=-O3 -Werror -Wall -Wextra -lm
 DFLAGS=-O0 -g -Wall -Wextra -lm
 BUILD=build
 EXE=$(BUILD)/pratt-parsing
 TEST=$(BUILD)/pratt-parsing-test
-DEB=$(BUILD)/pratt-parsing-debug
+DEBUG=$(BUILD)/pratt-parsing-debug
 
 ifeq ($(OS),Windows_NT)
     CFLAGS += -D__USE_MINGW_ANSI_STDIO
 endif
 
-all: $(BUILD) $(EXE) $(TEST) $(DEB)
+all: $(BUILD) $(EXE) $(TEST) $(DEBUG)
 
 $(EXE): $(SRC)
 	$(CC) $(CFLAGS) -o $(EXE) $(SRC)
 
-test: $(SRC)
+$(TEST): $(SRC)
 	$(CC) -DTEST $(CFLAGS) -o $(TEST) $(SRC)
 
-debug: $(SRC)
-	$(CC) $(DEFS) $(DFLAGS) -o $(DEB) $(SRC)
+$(DEBUG): $(SRC)
+	$(CC) $(DEFS) $(DFLAGS) -o $(DEBUG) $(SRC)
 
 run: $(EXE)
 	./build/pratt-parsing
+
+debug: $(DEBUG)
+	./buid/pratt-parsing-debug
+
+test: $(TEST)
+	./buid/pratt-parsing-test
 
 $(BUILD):
 	mkdir build
