@@ -64,9 +64,20 @@ Value get_result(Parser *parser, TokenList *tl, char *buffer)
     }
 }
 
-int main(void)
+const char* consume_arg(int *argc, char* **argv)
 {
-    enum { buffer_len = 1000 };
+    if (*argc <= 0) return NULL;
+    const char *arg = **argv;
+    (*argc)--;
+    (*argv)++;
+    return arg;
+}
+
+int main(int argc, char **argv)
+{
+    const char *program = consume_arg(&argc, &argv);
+    (void)program;
+    enum { buffer_len = 1024 };
     char buffer[buffer_len]; 
     TokenList list = {0};
     Parser parser = parser_create();
@@ -82,9 +93,25 @@ int main(void)
         log_value(&logger, result);
     }
 #else
-    while (true) {
-        printf(">> ");
-        fgets(buffer, sizeof(char) * buffer_len, stdin);
+    const char *arg = consume_arg(&argc, &argv);
+    if (!arg) {
+        while (true) {
+            printf(">> ");
+            fgets(buffer, sizeof(char) * buffer_len, stdin);
+            Value result = get_result(&parser, &list, buffer);
+            print_value(result);
+        }
+    }
+    else {
+        size_t i = 0;
+        while (arg) {
+            while (*arg && i < buffer_len - 1) {
+                buffer[i++] = *(arg++);
+            }
+            buffer[i++] = ' ';
+            arg = consume_arg(&argc, &argv);
+        }
+        buffer[i] = '\0';
         Value result = get_result(&parser, &list, buffer);
         print_value(result);
     }
